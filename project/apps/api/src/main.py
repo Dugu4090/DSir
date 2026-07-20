@@ -7,6 +7,7 @@ from src.api.v1.router import api_router
 from src.core.config import settings
 from src.db.base import Base
 from src.db.session import async_engine
+from src.models import *  # noqa: F401,F403 - registers models with Base.metadata
 
 
 @asynccontextmanager

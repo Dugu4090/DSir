@@ -8,10 +8,10 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.models.content import Concept, Course, Roadmap
+from src.models.content import Concept
 
 if TYPE_CHECKING:
-    from src.models.user import User
+    pass
 
 
 @dataclass
@@ -68,7 +68,7 @@ class KnowledgeGraph:
 
     async def topological_sort(self, course_id: UUID) -> list[UUID]:
         graph = await self.build_concept_graph(course_id)
-        in_degree = {cid: 0 for cid in graph}
+        in_degree: dict[UUID, int] = dict.fromkeys(graph, 0)
         for node in graph.values():
             for prereq in node.prerequisites:
                 if prereq in in_degree:

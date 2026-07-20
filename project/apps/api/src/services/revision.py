@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-import math
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING
 from uuid import UUID
 
@@ -32,7 +31,8 @@ class RevisionEngine:
                 concept_id=concept_id,
                 interval_days=1,
                 ease_factor=2.5,
-                due_at=datetime.now(timezone.utc),
+                repetitions=0,
+                due_at=datetime.now(UTC),
             )
             self.db.add(schedule)
         return schedule
@@ -43,18 +43,22 @@ class RevisionEngine:
         schedule = await self.get_schedule(user_id, concept_id)
         quality = max(0, min(5, quality))
 
-        if quality >= 3:
-            if schedule.interval_days == 1:
-                schedule.interval_days = 3
+        if quality < 3:
+            schedule.repetitions = 0
+            schedule.interval_days = 1
+        else:
+            schedule.repetitions += 1
+            if schedule.repetitions == 1:
+                schedule.interval_days = 1
+            elif schedule.repetitions == 2:
+                schedule.interval_days = 6
             else:
                 schedule.interval_days = max(1, int(schedule.interval_days * schedule.ease_factor))
-        else:
-            schedule.interval_days = 1
 
         ease_delta = 0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02)
         schedule.ease_factor = max(1.3, schedule.ease_factor + ease_delta)
-        schedule.last_reviewed_at = datetime.now(timezone.utc)
-        schedule.due_at = datetime.now(timezone.utc) + timedelta(days=schedule.interval_days)
+        schedule.last_reviewed_at = datetime.now(UTC)
+        schedule.due_at = datetime.now(UTC) + timedelta(days=schedule.interval_days)
         await self.db.flush()
         return schedule
 
@@ -63,7 +67,7 @@ class RevisionEngine:
             select(RevisionSchedule)
             .where(
                 RevisionSchedule.user_id == user_id,
-                RevisionSchedule.due_at <= datetime.now(timezone.utc),
+                RevisionSchedule.due_at <= datetime.now(UTC),
             )
             .order_by(RevisionSchedule.due_at)
             .limit(limit)

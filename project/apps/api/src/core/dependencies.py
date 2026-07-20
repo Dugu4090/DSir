@@ -1,19 +1,25 @@
-from datetime import datetime, timedelta, timezone
-from typing import Any
+from __future__ import annotations
+
 from uuid import UUID
 
 from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.config import settings
-from src.core.security import decode_access_token
 from src.db.session import get_db
 from src.models.user import User
 
 security = HTTPBearer(auto_error=False)
+
+
+def decode_access_token(token: str) -> dict | None:
+    try:
+        return jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
+    except JWTError:
+        return None
 
 
 async def get_current_user(
@@ -45,4 +51,5 @@ def require_roles(*roles: str):
         if not any(role in user_roles for role in roles):
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions")
         return user
+
     return checker

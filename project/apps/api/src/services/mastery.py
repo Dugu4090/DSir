@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import math
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 from uuid import UUID
 
@@ -39,11 +39,20 @@ class MasteryEngine:
         difficulty: float = 1.0,
         source: str = "exercise",
     ) -> ConceptMastery:
+        source_weights = {
+            "exercise": 1.0,
+            "quiz": 0.8,
+            "revision": 1.2,
+            "project": 1.5,
+            "assessment": 2.0,
+        }
+        weight = source_weights.get(source, 1.0)
+
         mastery = await self.get_mastery(user_id, concept_id)
         mastery.attempts += 1
         if is_correct:
             mastery.correct_streak += 1
-            gain = self._calculate_gain(mastery, difficulty)
+            gain = self._calculate_gain(mastery, difficulty * weight)
             mastery.score = min(100, mastery.score + gain)
             mastery.confidence = min(100, mastery.confidence + 5)
         else:
@@ -52,8 +61,8 @@ class MasteryEngine:
             mastery.score = max(0, mastery.score - penalty)
             mastery.confidence = max(0, mastery.confidence - 10)
 
-        mastery.last_reviewed_at = datetime.now(timezone.utc)
-        mastery.updated_at = datetime.now(timezone.utc)
+        mastery.last_reviewed_at = datetime.now(UTC)
+        mastery.updated_at = datetime.now(UTC)
         await self.db.flush()
         return mastery
 
@@ -72,7 +81,7 @@ class MasteryEngine:
         if mastery.last_reviewed_at is None:
             return mastery
 
-        days_since_review = (datetime.now(timezone.utc) - mastery.last_reviewed_at).days
+        days_since_review = (datetime.now(UTC) - mastery.last_reviewed_at).days
         if days_since_review <= 0:
             return mastery
 
@@ -82,7 +91,7 @@ class MasteryEngine:
 
         mastery.score = int(mastery.score * decay_factor)
         mastery.confidence = int(mastery.confidence * confidence_decay)
-        mastery.updated_at = datetime.now(timezone.utc)
+        mastery.updated_at = datetime.now(UTC)
         await self.db.flush()
         return mastery
 

@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+import json
 import os
-from typing import AsyncGenerator
+from collections.abc import AsyncGenerator
 
-from src.ai.base import AIProvider, AIResponse, Message
+from src.ai.protocols import AIProvider, AIResponse, Message
 
 
 class MockProvider(AIProvider):
@@ -26,7 +27,7 @@ class MockProvider(AIProvider):
         temperature: float = 0.7,
         max_tokens: int | None = None,
     ) -> AsyncGenerator[str, None]:
-        chunks = "This is a mock streaming response.".split()
+        chunks = ["This", "is", "a", "mock", "streaming", "response."]
         for chunk in chunks:
             yield chunk + " "
 
@@ -44,9 +45,7 @@ class OpenAIProvider(AIProvider):
         temperature: float = 0.7,
         max_tokens: int | None = None,
     ) -> AIResponse:
-        payload = [
-            {"role": m.role.value, "content": m.content} for m in messages
-        ]
+        payload = [{"role": m.role.value, "content": m.content} for m in messages]
         response = await self.client.chat.completions.create(
             model=self.model,
             messages=payload,
@@ -67,9 +66,7 @@ class OpenAIProvider(AIProvider):
         temperature: float = 0.7,
         max_tokens: int | None = None,
     ) -> AsyncGenerator[str, None]:
-        payload = [
-            {"role": m.role.value, "content": m.content} for m in messages
-        ]
+        payload = [{"role": m.role.value, "content": m.content} for m in messages]
         stream = await self.client.chat.completions.create(
             model=self.model,
             messages=payload,
@@ -166,7 +163,9 @@ class GeminiProvider(AIProvider):
         prompt = "\n".join(f"{m.role.value}: {m.content}" for m in messages)
         response = await self.client.generate_content_async(prompt, stream=True)
         async for chunk in response:
-            yield chunk.text or ""
+            text = chunk.text or ""
+            if text:
+                yield text
 
 
 class OllamaProvider(AIProvider):
@@ -212,5 +211,13 @@ class OllamaProvider(AIProvider):
         async with httpx.AsyncClient() as client:
             async with client.stream("POST", f"{self.base_url}/api/chat", json=payload) as response:
                 async for line in response.aiter_lines():
-                    if line:
-                        yield line
+                    if not line:
+                        continue
+                    try:
+                        data = json.loads(line)
+                        message = data.get("message", {})
+                        content = message.get("content", "")
+                        if content:
+                            yield content
+                    except json.JSONDecodeError:
+                        continue

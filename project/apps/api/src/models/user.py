@@ -1,11 +1,17 @@
+from __future__ import annotations
+
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, String, Text, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.db.base import Base
+
+if TYPE_CHECKING:
+    from src.models.learning import Enrollment
 
 
 class User(Base):
@@ -20,20 +26,20 @@ class User(Base):
     avatar_url: Mapped[str | None] = mapped_column(Text, nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+        DateTime(timezone=True), default=lambda: datetime.now(UTC)
     )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
-        default=lambda: datetime.now(timezone.utc),
-        onupdate=lambda: datetime.now(timezone.utc),
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
     )
 
-    profile: Mapped["UserProfile"] = relationship("UserProfile", back_populates="user", uselist=False)
-    roles: Mapped[list["UserRole"]] = relationship("UserRole", back_populates="user")
-    refresh_tokens: Mapped[list["RefreshToken"]] = relationship(
+    profile: Mapped[UserProfile] = relationship("UserProfile", back_populates="user", uselist=False)
+    roles: Mapped[list[UserRole]] = relationship("UserRole", back_populates="user")
+    refresh_tokens: Mapped[list[RefreshToken]] = relationship(
         "RefreshToken", back_populates="user"
     )
-    enrollments: Mapped[list["Enrollment"]] = relationship("Enrollment", back_populates="user")
+    enrollments: Mapped[list[Enrollment]] = relationship("Enrollment", back_populates="user")
 
 
 class UserProfile(Base):
@@ -46,9 +52,9 @@ class UserProfile(Base):
     daily_goal_minutes: Mapped[int] = mapped_column(default=30)
     preferred_language: Mapped[str] = mapped_column(String(10), default="en")
     onboarding_completed: Mapped[bool] = mapped_column(Boolean, default=False)
-    preferences: Mapped[dict] = mapped_column(default=dict)
+    preferences: Mapped[dict[str, Any]] = mapped_column(default=dict)
 
-    user: Mapped["User"] = relationship("User", back_populates="profile")
+    user: Mapped[User] = relationship("User", back_populates="profile")
 
 
 class UserRole(Base):
@@ -59,7 +65,7 @@ class UserRole(Base):
     user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"))
     role: Mapped[str] = mapped_column(String(50), nullable=False)
 
-    user: Mapped["User"] = relationship("User", back_populates="roles")
+    user: Mapped[User] = relationship("User", back_populates="roles")
 
 
 class RefreshToken(Base):
@@ -71,7 +77,7 @@ class RefreshToken(Base):
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     revoked: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+        DateTime(timezone=True), default=lambda: datetime.now(UTC)
     )
 
-    user: Mapped["User"] = relationship("User", back_populates="refresh_tokens")
+    user: Mapped[User] = relationship("User", back_populates="refresh_tokens")
