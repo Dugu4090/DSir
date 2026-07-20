@@ -1,11 +1,15 @@
+from __future__ import annotations
+
 import uuid
 from datetime import UTC, datetime
+from typing import Any
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
-from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.db.base import Base
+from src.db.types import JSONType
 
 
 class Roadmap(Base):
@@ -16,7 +20,7 @@ class Roadmap(Base):
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     is_published: Mapped[bool] = mapped_column(Boolean, default=False)
-    meta: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)
+    meta: Mapped[dict[str, Any]] = mapped_column(JSONType, default=dict)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(UTC)
     )
@@ -26,7 +30,7 @@ class Roadmap(Base):
         onupdate=lambda: datetime.now(UTC),
     )
 
-    roadmap_courses: Mapped[list["RoadmapCourse"]] = relationship(
+    roadmap_courses: Mapped[list[RoadmapCourse]] = relationship(
         "RoadmapCourse", back_populates="roadmap"
     )
 
@@ -40,7 +44,7 @@ class Course(Base):
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     technology: Mapped[str] = mapped_column(String(100), nullable=False)
     is_published: Mapped[bool] = mapped_column(Boolean, default=False)
-    meta: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)
+    meta: Mapped[dict[str, Any]] = mapped_column(JSONType, default=dict)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(UTC)
     )
@@ -50,8 +54,8 @@ class Course(Base):
         onupdate=lambda: datetime.now(UTC),
     )
 
-    concepts: Mapped[list["Concept"]] = relationship("Concept", back_populates="course")
-    roadmap_courses: Mapped[list["RoadmapCourse"]] = relationship(
+    concepts: Mapped[list[Concept]] = relationship("Concept", back_populates="course")
+    roadmap_courses: Mapped[list[RoadmapCourse]] = relationship(
         "RoadmapCourse", back_populates="course"
     )
 
@@ -69,8 +73,8 @@ class RoadmapCourse(Base):
     )
     position: Mapped[int] = mapped_column(Integer, nullable=False)
 
-    roadmap: Mapped["Roadmap"] = relationship("Roadmap", back_populates="roadmap_courses")
-    course: Mapped["Course"] = relationship("Course", back_populates="roadmap_courses")
+    roadmap: Mapped[Roadmap] = relationship("Roadmap", back_populates="roadmap_courses")
+    course: Mapped[Course] = relationship("Course", back_populates="roadmap_courses")
 
 
 class Concept(Base):
@@ -85,14 +89,14 @@ class Concept(Base):
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     difficulty: Mapped[str | None] = mapped_column(String(50), nullable=True)
-    prerequisites: Mapped[list[uuid.UUID]] = mapped_column(JSONB, default=list)
-    meta: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)
+    prerequisites: Mapped[list[uuid.UUID]] = mapped_column(JSONType, default=list)
+    meta: Mapped[dict[str, Any]] = mapped_column(JSONType, default=dict)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(UTC)
     )
 
-    course: Mapped["Course"] = relationship("Course", back_populates="concepts")
-    lessons: Mapped[list["Lesson"]] = relationship("Lesson", back_populates="concept")
+    course: Mapped[Course] = relationship("Course", back_populates="concepts")
+    lessons: Mapped[list[Lesson]] = relationship("Lesson", back_populates="concept")
 
 
 class Lesson(Base):
@@ -105,12 +109,12 @@ class Lesson(Base):
     )
     slug: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
     title: Mapped[str] = mapped_column(String(255), nullable=False)
-    content: Mapped[dict] = mapped_column(JSONB, nullable=False)
+    content: Mapped[dict[str, Any]] = mapped_column(JSONType, nullable=False)
     lesson_type: Mapped[str] = mapped_column(String(50), default="reading")
     position: Mapped[int] = mapped_column(Integer, nullable=False)
-    meta: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)
+    meta: Mapped[dict[str, Any]] = mapped_column(JSONType, default=dict)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(UTC)
     )
 
-    concept: Mapped["Concept"] = relationship("Concept", back_populates="lessons")
+    concept: Mapped[Concept] = relationship("Concept", back_populates="lessons")

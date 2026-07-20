@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     CORS_ORIGINS: list[str] = ["http://localhost:3000"]
     AI_DEFAULT_PROVIDER: str = "mock"
     AI_FALLBACK_PROVIDER: str | None = None
+    PISTON_BASE_URL: str | None = None
 
     class Config:
         env_file = ".env"

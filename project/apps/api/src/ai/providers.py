@@ -208,9 +208,10 @@ class OllamaProvider(AIProvider):
             "messages": [{"role": m.role.value, "content": m.content} for m in messages],
             "stream": True,
         }
-        async with httpx.AsyncClient() as client:
-            async with client.stream("POST", f"{self.base_url}/api/chat", json=payload) as response:
-                async for line in response.aiter_lines():
+        async with httpx.AsyncClient() as client, client.stream(
+            "POST", f"{self.base_url}/api/chat", json=payload
+        ) as response:
+            async for line in response.aiter_lines():
                     if not line:
                         continue
                     try:

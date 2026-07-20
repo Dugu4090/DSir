@@ -4,18 +4,6 @@ from datetime import datetime
 from pydantic import BaseModel
 
 
-class RoadmapRead(BaseModel):
-    id: uuid.UUID
-    slug: str
-    title: str
-    description: str | None = None
-    is_published: bool
-    created_at: datetime
-
-    class Config:
-        from_attributes = True
-
-
 class CourseRead(BaseModel):
     id: uuid.UUID
     slug: str

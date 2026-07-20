@@ -1,11 +1,15 @@
+from __future__ import annotations
+
 import uuid
 from datetime import UTC, datetime
+from typing import Any
 
 from sqlalchemy import DateTime, ForeignKey, Integer, UniqueConstraint
-from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from src.db.base import Base
+from src.db.types import JSONType
 
 
 class RevisionSchedule(Base):
@@ -40,8 +44,8 @@ class RevisionSession(Base):
         DateTime(timezone=True), default=lambda: datetime.now(UTC)
     )
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    concepts: Mapped[list[uuid.UUID]] = mapped_column(JSONB, default=list)
-    results: Mapped[dict] = mapped_column(JSONB, default=dict)
+    concepts: Mapped[list[uuid.UUID]] = mapped_column(JSONType, default=list)
+    results: Mapped[dict[str, Any]] = mapped_column(JSONType, default=dict)
 
 
 class RevisionProblemQueue(Base):
@@ -54,7 +58,7 @@ class RevisionProblemQueue(Base):
     concept_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("concepts.id"), nullable=False
     )
-    problem_data: Mapped[dict] = mapped_column(JSONB, default=dict, nullable=False)
+    problem_data: Mapped[dict[str, Any]] = mapped_column(JSONType, default=dict, nullable=False)
     generated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(UTC)
     )

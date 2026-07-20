@@ -9,6 +9,7 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.db.base import Base
+from src.db.types import JSONType
 
 if TYPE_CHECKING:
     from src.models.learning import Enrollment
@@ -52,7 +53,7 @@ class UserProfile(Base):
     daily_goal_minutes: Mapped[int] = mapped_column(default=30)
     preferred_language: Mapped[str] = mapped_column(String(10), default="en")
     onboarding_completed: Mapped[bool] = mapped_column(Boolean, default=False)
-    preferences: Mapped[dict[str, Any]] = mapped_column(default=dict)
+    preferences: Mapped[dict[str, Any]] = mapped_column(JSONType, default=dict)
 
     user: Mapped[User] = relationship("User", back_populates="profile")
 

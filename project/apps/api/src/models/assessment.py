@@ -1,11 +1,15 @@
+from __future__ import annotations
+
 import uuid
 from datetime import UTC, datetime
+from typing import Any
 
 from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
-from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from src.db.base import Base
+from src.db.types import JSONType
 
 
 class Submission(Base):
@@ -22,8 +26,8 @@ class Submission(Base):
         UUID(as_uuid=True), ForeignKey("concepts.id"), nullable=True
     )
     submission_type: Mapped[str] = mapped_column(String(50), nullable=False)
-    payload: Mapped[dict] = mapped_column(JSONB, nullable=False)
-    evaluation: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    payload: Mapped[dict[str, Any]] = mapped_column(JSONType, nullable=False)
+    evaluation: Mapped[dict[str, object] | None] = mapped_column(JSONType, nullable=True)
     score: Mapped[int | None] = mapped_column(Integer, nullable=True)
     submitted_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(UTC)
@@ -42,9 +46,9 @@ class Project(Base):
     slug: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
-    requirements: Mapped[dict] = mapped_column(JSONB, default=dict)
-    starter_files: Mapped[dict] = mapped_column(JSONB, default=dict)
-    meta: Mapped[dict] = mapped_column(JSONB, default=dict)
+    requirements: Mapped[dict[str, Any]] = mapped_column(JSONType, default=dict)
+    starter_files: Mapped[dict[str, Any]] = mapped_column(JSONType, default=dict)
+    meta: Mapped[dict[str, Any]] = mapped_column(JSONType, default=dict)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(UTC)
     )
@@ -61,8 +65,8 @@ class ProjectSubmission(Base):
         UUID(as_uuid=True), ForeignKey("projects.id"), nullable=False
     )
     repository_url: Mapped[str | None] = mapped_column(Text, nullable=True)
-    files: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
-    feedback: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    files: Mapped[dict[str, object] | None] = mapped_column(JSONType, nullable=True)
+    feedback: Mapped[dict[str, object] | None] = mapped_column(JSONType, nullable=True)
     score: Mapped[int | None] = mapped_column(Integer, nullable=True)
     submitted_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(UTC)
