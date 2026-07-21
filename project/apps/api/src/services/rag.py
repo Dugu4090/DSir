@@ -46,9 +46,27 @@ class RAGService:
         limit: int = 5,
         course_id: UUID | None = None,
         concept_id: UUID | None = None,
+        concept_ids: list[UUID] | None = None,
     ) -> list[KnowledgeChunk]:
         """Semantic search over knowledge chunks."""
         embedding = await self.ai.embed(query)
+        return await self._search_by_embedding(
+            embedding,
+            limit=limit,
+            course_id=course_id,
+            concept_id=concept_id,
+            concept_ids=concept_ids,
+        )
+
+    async def _search_by_embedding(
+        self,
+        embedding: list[float],
+        limit: int = 5,
+        course_id: UUID | None = None,
+        concept_id: UUID | None = None,
+        concept_ids: list[UUID] | None = None,
+    ) -> list[KnowledgeChunk]:
+        """Search by pre-computed embedding."""
         dialect = self.db.bind.dialect.name if self.db.bind else "postgresql"
 
         if dialect == "postgresql":
@@ -63,6 +81,8 @@ class RAGService:
             stmt = stmt.where(KnowledgeChunk.course_id == course_id)
         if concept_id is not None:
             stmt = stmt.where(KnowledgeChunk.concept_id == concept_id)
+        if concept_ids:
+            stmt = stmt.where(KnowledgeChunk.concept_id.in_(concept_ids))
 
         stmt = stmt.limit(limit)
         result = await self.db.execute(stmt)
@@ -81,18 +101,9 @@ class RAGService:
         if not concept_ids:
             return await self.search(query, limit=limit)
 
-        # Limit to weak concepts; if too few, also search broadly
-        chunks: list[KnowledgeChunk] = []
-        for concept_id in concept_ids[:limit]:
-            chunks.extend(await self.search(query, limit=1, concept_id=concept_id))
-        return chunks[:limit]
+        embedding = await self.ai.embed(query)
+        return await self._search_by_embedding(embedding, limit=limit, concept_ids=concept_ids)
 
     async def course_knowledge(self, course_id: UUID, query: str, limit: int = 5) -> list[KnowledgeChunk]:
         """Retrieve relevant knowledge chunks for a course."""
         return await self.search(query, limit=limit, course_id=course_id)
-
-
-async def get_rag_service() -> RAGService:
-    """Factory for RAGService using a fresh async session."""
-    async with AsyncSessionLocal() as db:
-        return RAGService(db, get_ai_manager())

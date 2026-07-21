@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.ai.manager import get_ai_manager
 from src.core.dependencies import get_current_active_user, require_content_creator
 from src.db.session import get_db
+from src.models.learning import Enrollment
 from src.models.user import User
 from src.schemas.rag import (
     CourseKnowledgeRequest,
@@ -49,7 +50,18 @@ async def search_knowledge(
     data: SearchRequest,
     current_user: User = Depends(get_current_active_user),
     service: RAGService = Depends(_get_rag_service),
+    db: AsyncSession = Depends(get_db),
 ) -> SearchResponse:
+    if data.course_id is not None:
+        enrollment = await db.execute(
+            select(Enrollment).where(
+                Enrollment.user_id == current_user.id,
+                Enrollment.course_id == data.course_id,
+            )
+        )
+        if not enrollment.scalar_one_or_none():
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not enrolled")
+
     results = await service.search(
         query=data.query,
         limit=data.limit,
@@ -80,7 +92,17 @@ async def search_course_knowledge(
     data: CourseKnowledgeRequest,
     current_user: User = Depends(get_current_active_user),
     service: RAGService = Depends(_get_rag_service),
+    db: AsyncSession = Depends(get_db),
 ) -> SearchResponse:
+    enrollment = await db.execute(
+        select(Enrollment).where(
+            Enrollment.user_id == current_user.id,
+            Enrollment.course_id == data.course_id,
+        )
+    )
+    if not enrollment.scalar_one_or_none():
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not enrolled")
+
     results = await service.course_knowledge(data.course_id, data.query, limit=data.limit)
     return SearchResponse(
         query=data.query,

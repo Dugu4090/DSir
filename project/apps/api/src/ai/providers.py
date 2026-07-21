@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import random
 from collections.abc import AsyncGenerator
 
 from src.ai.protocols import AIProvider, AIResponse, Message
