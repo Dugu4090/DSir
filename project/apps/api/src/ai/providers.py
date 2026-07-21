@@ -31,6 +31,13 @@ class MockProvider(AIProvider):
         for chunk in chunks:
             yield chunk + " "
 
+    async def embed(self, text: str, dimensions: int = 1536) -> list[float]:
+        import hashlib
+
+        seed = int(hashlib.sha256(text.encode()).hexdigest(), 16)
+        rng = random.Random(seed)
+        return [rng.uniform(-1, 1) for _ in range(dimensions)]
+
 
 class OpenAIProvider(AIProvider):
     def __init__(self, api_key: str | None = None, model: str = "gpt-4o-mini"):
@@ -41,6 +48,14 @@ class OpenAIProvider(AIProvider):
 
         self.client = openai.AsyncOpenAI(api_key=api_key or os.getenv("OPENAI_API_KEY"))
         self.model = model
+
+    async def embed(self, text: str, dimensions: int = 1536) -> list[float]:
+        response = await self.client.embeddings.create(
+            input=text,
+            model="text-embedding-3-small",
+            dimensions=dimensions,
+        )
+        return list(response.data[0].embedding)
 
     async def generate(
         self,

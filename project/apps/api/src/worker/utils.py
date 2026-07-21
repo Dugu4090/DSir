@@ -8,18 +8,7 @@ T = TypeVar("T")
 
 
 def run_async(coro: Coroutine[Any, Any, T]) -> T:
-    """Run an async coroutine from a synchronous Celery task.
-
-    Uses asyncio.run by default. If an loop is already running (e.g. during
-    tests), it runs the coroutine on that loop.
-    """
-    try:
-        loop = asyncio.get_running_loop()
-    except RuntimeError:
-        return asyncio.run(coro)
-
-    if loop.is_running():
-        return loop.run_until_complete(coro)
+    """Run an async coroutine from a synchronous Celery task."""
     return asyncio.run(coro)
 
 
