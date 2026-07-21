@@ -36,13 +36,7 @@ class _MemoryStore:
 
 _memory_store = _MemoryStore()
 
-try:
-    if HAS_REDIS:
-        _redis_client = redis.from_url(settings.REDIS_URL)
-    else:
-        _redis_client = None
-except Exception:  # pragma: no cover
-    _redis_client = None
+_redis_client = redis.from_url(settings.REDIS_URL) if HAS_REDIS else None
 
 
 class RateLimitExceeded(HTTPException):

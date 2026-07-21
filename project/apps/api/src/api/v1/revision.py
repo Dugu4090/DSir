@@ -10,7 +10,7 @@ from src.core.dependencies import get_current_active_user
 from src.db.session import get_db
 from src.models.revision import RevisionSchedule, RevisionSession
 from src.models.user import User
-from src.schemas.common import PaginationParams, PaginatedResponse
+from src.schemas.common import PaginatedResponse, PaginationParams
 from src.schemas.revision import (
     ReviewRequest,
     ReviewResponse,

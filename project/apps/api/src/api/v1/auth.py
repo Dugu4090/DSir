@@ -15,7 +15,6 @@ from src.core.security import (
     hash_refresh_token,
     validate_password,
     verify_password,
-    verify_refresh_token,
 )
 from src.db.session import get_db
 from src.models.user import RefreshToken, User, UserRole
@@ -54,7 +53,7 @@ async def register(data: RegisterRequest, db: AsyncSession = Depends(get_db)) ->
         try:
             validate_password(data.password)
         except ValueError as exc:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
 
     user = User(
         email=data.email,

@@ -6,12 +6,12 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.core.dependencies import get_current_active_user, require_admin
+from src.core.dependencies import get_current_active_user
 from src.db.session import get_db
 from src.models.content import Course, Roadmap
 from src.models.learning import Enrollment
 from src.models.user import User
-from src.schemas.common import PaginationParams, PaginatedResponse
+from src.schemas.common import PaginatedResponse, PaginationParams
 from src.schemas.enrollment import EnrollmentCreate, EnrollmentRead
 
 router = APIRouter()

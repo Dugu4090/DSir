@@ -2,14 +2,14 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.core.dependencies import require_admin, require_content_creator
+from src.core.dependencies import require_content_creator
 from src.db.session import get_db
 from src.models.content import Concept, Course
-from src.schemas.common import PaginationParams, PaginatedResponse
+from src.schemas.common import PaginatedResponse, PaginationParams
 from src.schemas.content import ConceptRead, CourseRead
 
 router = APIRouter()

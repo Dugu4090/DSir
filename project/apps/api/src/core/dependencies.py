@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.config import settings
 from src.db.session import get_db
-from src.models.user import User, UserRole
+from src.models.user import User
 
 security = HTTPBearer(auto_error=False)
 

@@ -9,9 +9,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.core.dependencies import get_current_active_user, require_content_creator
 from src.db.session import get_db
 from src.models.assessment import Project, ProjectSubmission
-from src.models.content import Course
 from src.models.user import User
-from src.schemas.common import PaginationParams, PaginatedResponse
+from src.schemas.common import PaginatedResponse, PaginationParams
 from src.schemas.project import (
     ProjectDetail,
     ProjectRead,

@@ -10,7 +10,7 @@ from src.core.dependencies import require_content_creator
 from src.db.session import get_db
 from src.models.content import Concept, Lesson
 from src.models.user import User
-from src.schemas.common import PaginationParams, PaginatedResponse
+from src.schemas.common import PaginatedResponse, PaginationParams
 from src.schemas.lesson import LessonDetail, LessonRead
 
 router = APIRouter()
@@ -35,7 +35,7 @@ async def list_lessons(
     lessons = result.scalars().all()
 
     return PaginatedResponse(
-        items=[LessonRead.model_validate(l).model_dump() for l in lessons],
+        items=[LessonRead.model_validate(lesson).model_dump() for lesson in lessons],
         total=total,
         page=pagination.page,
         per_page=pagination.per_page,

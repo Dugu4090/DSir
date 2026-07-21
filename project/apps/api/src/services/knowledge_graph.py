@@ -8,7 +8,7 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.models.content import Concept, Course, Roadmap, RoadmapCourse
+from src.models.content import Concept, RoadmapCourse
 
 if TYPE_CHECKING:
     pass

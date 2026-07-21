@@ -5,12 +5,13 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
-from src.core.dependencies import get_current_active_user, require_content_creator
+from src.core.dependencies import require_content_creator
 from src.db.session import get_db
 from src.models.content import Course, Roadmap, RoadmapCourse
 from src.models.user import User
-from src.schemas.common import PaginationParams, PaginatedResponse
+from src.schemas.common import PaginatedResponse, PaginationParams
 from src.schemas.roadmap import (
     RoadmapCreate,
     RoadmapDetail,
@@ -48,7 +49,11 @@ async def list_roadmaps(
 
 @router.get("/{roadmap_id}", response_model=RoadmapDetail)
 async def get_roadmap(roadmap_id: UUID, db: AsyncSession = Depends(get_db)) -> Roadmap:
-    result = await db.execute(select(Roadmap).where(Roadmap.id == roadmap_id))
+    result = await db.execute(
+        select(Roadmap)
+        .where(Roadmap.id == roadmap_id)
+        .options(selectinload(Roadmap.roadmap_courses))
+    )
     roadmap = result.scalar_one_or_none()
     if roadmap is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Roadmap not found")

@@ -11,7 +11,7 @@ from src.db.session import get_db
 from src.models.content import Concept
 from src.models.learning import ConceptMastery
 from src.models.user import User
-from src.schemas.common import PaginationParams, PaginatedResponse
+from src.schemas.common import PaginatedResponse, PaginationParams
 from src.schemas.mastery import ConceptMasteryRead, StrengthsWeaknesses
 from src.services.mastery import MasteryEngine
 

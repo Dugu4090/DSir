@@ -2,15 +2,15 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.core.dependencies import get_current_active_user, require_admin
+from src.core.dependencies import require_admin
 from src.core.security import get_password_hash
 from src.db.session import get_db
 from src.models.user import User, UserRole
-from src.schemas.common import PaginationParams, PaginatedResponse
+from src.schemas.common import PaginatedResponse, PaginationParams
 from src.schemas.user import UserCreate, UserRead
 
 router = APIRouter()

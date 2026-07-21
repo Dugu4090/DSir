@@ -1,6 +1,20 @@
 from fastapi import APIRouter
 
-from src.api.v1 import ai, auth, courses, enrollments, execution, lessons, mastery, profiles, projects, revision, roadmaps, submissions, users
+from src.api.v1 import (
+    ai,
+    auth,
+    courses,
+    enrollments,
+    execution,
+    lessons,
+    mastery,
+    profiles,
+    projects,
+    revision,
+    roadmaps,
+    submissions,
+    users,
+)
 
 api_router = APIRouter()
 
