@@ -6,14 +6,19 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.ai.manager import get_ai_manager
 from src.core.dependencies import get_current_active_user
 from src.db.session import get_db
 from src.models.revision import RevisionSchedule, RevisionSession
 from src.models.user import User
 from src.schemas.common import PaginatedResponse, PaginationParams
 from src.schemas.revision import (
+    ActiveRecallProblemRead,
+    ActiveRecallSessionRead,
+    GenerateProblemRequest,
     ReviewRequest,
     ReviewResponse,
+    RevisionAnalyticsRead,
     RevisionScheduleRead,
     RevisionSessionRead,
     RevisionSessionStart,
@@ -23,13 +28,18 @@ from src.services.revision import RevisionEngine
 router = APIRouter()
 
 
+async def _get_revision_engine(
+    db: AsyncSession = Depends(get_db),
+) -> RevisionEngine:
+    return RevisionEngine(db, get_ai_manager())
+
+
 @router.get("/due", response_model=list[RevisionScheduleRead])
 async def get_due_revisions(
     limit: int = 10,
     current_user: User = Depends(get_current_active_user),
-    db: AsyncSession = Depends(get_db),
+    engine: RevisionEngine = Depends(_get_revision_engine),
 ) -> list[RevisionSchedule]:
-    engine = RevisionEngine(db)
     return await engine.build_revision_queue(current_user.id, limit=limit)
 
 
@@ -37,9 +47,8 @@ async def get_due_revisions(
 async def get_schedule(
     concept_id: UUID,
     current_user: User = Depends(get_current_active_user),
-    db: AsyncSession = Depends(get_db),
+    engine: RevisionEngine = Depends(_get_revision_engine),
 ) -> RevisionSchedule:
-    engine = RevisionEngine(db)
     schedule = await engine.get_schedule(current_user.id, concept_id)
     return schedule
 
@@ -48,9 +57,9 @@ async def get_schedule(
 async def submit_review(
     data: ReviewRequest,
     current_user: User = Depends(get_current_active_user),
+    engine: RevisionEngine = Depends(_get_revision_engine),
     db: AsyncSession = Depends(get_db),
 ) -> ReviewResponse:
-    engine = RevisionEngine(db)
     schedule = await engine.schedule_review(current_user.id, data.concept_id, data.quality)
 
     response = ReviewResponse(
@@ -62,6 +71,59 @@ async def submit_review(
     )
     await db.commit()
     return response
+
+
+@router.post("/problems/generate", response_model=ActiveRecallProblemRead, status_code=status.HTTP_201_CREATED)
+async def generate_revision_problem(
+    data: GenerateProblemRequest,
+    current_user: User = Depends(get_current_active_user),
+    engine: RevisionEngine = Depends(_get_revision_engine),
+    db: AsyncSession = Depends(get_db),
+) -> ActiveRecallProblemRead:
+    problem = await engine.generate_problem(
+        user_id=current_user.id,
+        concept_id=data.concept_id,
+        difficulty=data.difficulty,
+        mistakes=data.mistakes,
+    )
+    await db.commit()
+    return ActiveRecallProblemRead(
+        concept_id=problem.concept_id,
+        problem=problem.problem_data,
+        due_at=None,
+    )
+
+
+@router.post("/problems/active/{concept_id}", response_model=ActiveRecallProblemRead)
+async def get_active_recall_problem(
+    concept_id: UUID,
+    current_user: User = Depends(get_current_active_user),
+    engine: RevisionEngine = Depends(_get_revision_engine),
+    db: AsyncSession = Depends(get_db),
+) -> ActiveRecallProblemRead:
+    problem = await engine.get_active_recall_problem(current_user.id, concept_id)
+    await db.commit()
+    return ActiveRecallProblemRead(
+        concept_id=problem.concept_id,
+        problem=problem.problem_data,
+        due_at=None,
+    )
+
+
+@router.post("/sessions/active", response_model=ActiveRecallSessionRead, status_code=status.HTTP_201_CREATED)
+async def start_active_recall_session(
+    data: RevisionSessionStart,
+    current_user: User = Depends(get_current_active_user),
+    engine: RevisionEngine = Depends(_get_revision_engine),
+    db: AsyncSession = Depends(get_db),
+) -> ActiveRecallSessionRead:
+    result = await engine.start_active_recall_session(current_user.id, data.concept_ids)
+    await db.commit()
+    problems = [
+        ActiveRecallProblemRead(concept_id=p["concept_id"], problem=p["problem"], due_at=p.get("due_at"))
+        for p in result["problems"]
+    ]
+    return ActiveRecallSessionRead(session_id=result["session_id"], problems=problems)
 
 
 @router.post("/sessions", response_model=RevisionSessionRead, status_code=status.HTTP_201_CREATED)
@@ -115,3 +177,12 @@ async def list_revision_sessions(
 
     query = select(RevisionSession).where(RevisionSession.user_id == current_user.id)
     return await paginated_response(db, query, pagination, RevisionSessionRead)
+
+
+@router.get("/analytics", response_model=RevisionAnalyticsRead)
+async def get_revision_analytics(
+    current_user: User = Depends(get_current_active_user),
+    engine: RevisionEngine = Depends(_get_revision_engine),
+) -> RevisionAnalyticsRead:
+    data = await engine.get_analytics(current_user.id)
+    return RevisionAnalyticsRead(**data)
