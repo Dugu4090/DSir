@@ -1,6 +1,7 @@
 from src.models.assessment import Project, ProjectSubmission, Submission
 from src.models.audit import AuditLog
 from src.models.content import Concept, Course, Lesson, Roadmap, RoadmapCourse
+from src.models.execution import ExecutionHistory
 from src.models.learning import ConceptMastery, Enrollment, UserActivity
 from src.models.revision import RevisionProblemQueue, RevisionSchedule, RevisionSession
 from src.models.user import RefreshToken, User, UserProfile, UserRole
@@ -25,4 +26,5 @@ __all__ = [
     "RevisionSession",
     "RevisionProblemQueue",
     "AuditLog",
+    "ExecutionHistory",
 ]
