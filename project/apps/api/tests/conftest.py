@@ -54,3 +54,42 @@ async def client(db_session):
     app.dependency_overrides[get_db] = override_get_db
     yield TestClient(app)
     app.dependency_overrides.clear()
+
+
+@pytest_asyncio.fixture
+async def auth_client(db_session):
+    from fastapi.testclient import TestClient
+
+    from src.core.security import get_password_hash
+    from src.models.user import User, UserRole
+
+    def override_get_db():
+        yield db_session
+
+    app.dependency_overrides[get_db] = override_get_db
+
+    test_client = TestClient(app)
+
+    # Seed a test user with admin/content_creator roles
+    user = User(email="test@example.com", hashed_password=get_password_hash("Password1"))
+    db_session.add(user)
+    await db_session.flush()
+    db_session.add_all(
+        [
+            UserRole(user_id=user.id, role="learner"),
+            UserRole(user_id=user.id, role="admin"),
+            UserRole(user_id=user.id, role="content_creator"),
+        ]
+    )
+    await db_session.commit()
+
+    login = test_client.post(
+        "/api/v1/auth/login",
+        json={"email": "test@example.com", "password": "Password1"},
+    )
+    token = login.json()["access_token"]
+    test_client.headers["Authorization"] = f"Bearer {token}"
+
+    yield test_client
+
+    app.dependency_overrides.clear()
