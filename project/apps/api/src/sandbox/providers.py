@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import os
-
 import httpx
 
 from src.core.config import settings
@@ -47,16 +45,13 @@ class PistonSandbox(CodeSandbox):
             "compile_timeout": timeout_ms,
         }
         # Piston v2 optionally supports run_memory_limit and compile_memory_limit in bytes
-        try:
-            memory_bytes = memory_mb * 1024 * 1024
-            payload.update(
-                {
-                    "run_memory_limit": memory_bytes,
-                    "compile_memory_limit": memory_bytes,
-                }
-            )
-        except Exception:
-            pass
+        memory_bytes = memory_mb * 1024 * 1024
+        payload.update(
+            {
+                "run_memory_limit": memory_bytes,
+                "compile_memory_limit": memory_bytes,
+            }
+        )
 
         try:
             async with httpx.AsyncClient(timeout=timeout_ms / 1000 + 1.0) as client:
@@ -79,6 +74,6 @@ class PistonSandbox(CodeSandbox):
             stdout=stdout,
             stderr=stderr,
             exit_code=run.get("code", 1),
-            execution_time_ms=run.get("cpuUsage", 0),
+            execution_time_ms=int(run.get("cpuUsage", 0) or 0),
             is_timeout=False,
         )

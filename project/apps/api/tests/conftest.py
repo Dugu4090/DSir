@@ -32,7 +32,7 @@ async def create_test_tables(test_engine):
 @pytest_asyncio.fixture
 async def db_session(test_engine):
     conn = await test_engine.connect()
-    session = AsyncSession(bind=conn)
+    session = AsyncSession(bind=conn, expire_on_commit=False)
 
     yield session
 
@@ -48,7 +48,7 @@ async def db_session(test_engine):
 async def client(db_session):
     from fastapi.testclient import TestClient
 
-    def override_get_db():
+    async def override_get_db():
         yield db_session
 
     app.dependency_overrides[get_db] = override_get_db
@@ -63,7 +63,7 @@ async def auth_client(db_session):
     from src.core.security import get_password_hash
     from src.models.user import User, UserRole
 
-    def override_get_db():
+    async def override_get_db():
         yield db_session
 
     app.dependency_overrides[get_db] = override_get_db

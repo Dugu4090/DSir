@@ -1,35 +1,92 @@
 from __future__ import annotations
 
-from fastapi import APIRouter
+from uuid import UUID
 
-from src.core.config import settings
-from src.sandbox.interfaces import ExecutionRequest as SandboxExecutionRequest
-from src.sandbox.providers import MockSandbox, PistonSandbox
-from src.schemas.execution import ExecutionRequest, ExecutionResponse
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from src.ai.manager import get_ai_manager
+from src.core.dependencies import get_current_active_user
+from src.db.session import get_db
+from src.models.execution import ExecutionHistory
+from src.models.user import User
+from src.sandbox.registry import SandboxRegistry
+from src.schemas.execution import (
+    CodeReviewResult,
+    ExecutionHistoryRead,
+    ExecutionRequest,
+    ExecutionResponse,
+    ExecutionReviewResponse,
+)
+from src.services.execution import ExecutionService
 
 router = APIRouter()
 
 
-async def get_sandbox():
-    if settings.PISTON_BASE_URL:
-        return PistonSandbox(settings.PISTON_BASE_URL)
-    return MockSandbox()
+async def _get_execution_service(
+    db: AsyncSession = Depends(get_db),
+) -> ExecutionService:
+    sandbox = SandboxRegistry.get()
+    ai_manager = get_ai_manager()
+    return ExecutionService(db, sandbox, ai_manager)
 
 
 @router.post("/run", response_model=ExecutionResponse)
-async def execute_code(data: ExecutionRequest) -> ExecutionResponse:
-    sandbox = await get_sandbox()
-    request = SandboxExecutionRequest(
-        code=data.code,
-        language=data.language,
-        timeout_ms=data.timeout_ms,
-        memory_limit_mb=data.memory_limit_mb,
+async def execute_code(
+    data: ExecutionRequest,
+    current_user: User = Depends(get_current_active_user),
+    service: ExecutionService = Depends(_get_execution_service),
+) -> ExecutionResponse:
+    result, _ = await service.execute_and_log(
+        user_id=current_user.id,
+        request=data,
     )
-    result = await sandbox.execute(request)
-    return ExecutionResponse(
-        stdout=result.stdout,
-        stderr=result.stderr,
-        exit_code=result.exit_code,
-        execution_time_ms=result.execution_time_ms,
-        is_timeout=result.is_timeout,
+    return result
+
+
+@router.post("/run/review", response_model=ExecutionReviewResponse)
+async def execute_and_review(
+    data: ExecutionRequest,
+    current_user: User = Depends(get_current_active_user),
+    service: ExecutionService = Depends(_get_execution_service),
+) -> ExecutionReviewResponse:
+    result, history_id = await service.execute_and_log(
+        user_id=current_user.id,
+        request=data,
     )
+    review = await service.review_code(history_id, data.code, data.language)
+    return ExecutionReviewResponse(
+        execution=result,
+        history_id=history_id,
+        ai_review=CodeReviewResult(**review),
+    )
+
+
+@router.get("/history", response_model=list[ExecutionHistoryRead])
+async def list_execution_history(
+    limit: int = 50,
+    offset: int = 0,
+    current_user: User = Depends(get_current_active_user),
+    service: ExecutionService = Depends(_get_execution_service),
+) -> list[ExecutionHistoryRead]:
+    history = await service.get_history(current_user.id, limit=limit, offset=offset)
+    return [ExecutionHistoryRead.model_validate(h) for h in history]
+
+
+@router.get("/history/{history_id}", response_model=ExecutionHistoryRead)
+async def get_execution_history(
+    history_id: UUID,
+    current_user: User = Depends(get_current_active_user),
+    service: ExecutionService = Depends(_get_execution_service),
+) -> ExecutionHistoryRead:
+    result = await service.db.execute(
+        select(ExecutionHistory).where(
+            ExecutionHistory.id == history_id,
+            ExecutionHistory.user_id == current_user.id,
+        )
+    )
+    history = result.scalar_one_or_none()
+    if history is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Execution not found")
+    return ExecutionHistoryRead.model_validate(history)

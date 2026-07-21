@@ -3,7 +3,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class RevisionScheduleRead(BaseModel):
@@ -45,3 +45,29 @@ class ReviewResponse(BaseModel):
     new_interval_days: int
     new_ease_factor: float
     due_at: datetime
+
+
+class ActiveRecallProblemRead(BaseModel):
+    concept_id: uuid.UUID
+    problem: dict
+    due_at: datetime | None = None
+
+    class Config:
+        from_attributes = True
+
+
+class ActiveRecallSessionRead(BaseModel):
+    session_id: uuid.UUID
+    problems: list[dict]
+
+
+class RevisionAnalyticsRead(BaseModel):
+    due_count: int
+    total_scheduled: int
+    sessions_count: int
+
+
+class GenerateProblemRequest(BaseModel):
+    concept_id: uuid.UUID
+    difficulty: str = Field(default="medium", pattern="^(easy|medium|hard)$")
+    mistakes: str = ""
