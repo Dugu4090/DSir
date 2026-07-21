@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import os
-import uuid
 
 import pytest_asyncio
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
@@ -33,13 +32,15 @@ async def create_test_tables(test_engine):
 @pytest_asyncio.fixture
 async def db_session(test_engine):
     conn = await test_engine.connect()
-    trans = await conn.begin()
     session = AsyncSession(bind=conn)
 
     yield session
 
     await session.close()
-    await trans.rollback()
+    # Cleanup all data after each test for isolation
+    async with test_engine.begin() as cleanup_conn:
+        for table in reversed(Base.metadata.sorted_tables):
+            await cleanup_conn.execute(table.delete())
     await conn.close()
 
 

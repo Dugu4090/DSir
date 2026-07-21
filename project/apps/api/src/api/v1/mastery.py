@@ -67,5 +67,7 @@ async def record_attempt(
 
     engine = MasteryEngine(db)
     mastery = await engine.record_attempt(user_id, concept_id, is_correct, difficulty, source)
+    # Build response before commit to avoid expired ORM attributes
+    response = ConceptMasteryRead.model_validate(mastery)
     await db.commit()
-    return mastery
+    return response

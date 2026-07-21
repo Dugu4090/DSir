@@ -43,15 +43,17 @@ async def submit_review(
 ) -> ReviewResponse:
     engine = RevisionEngine(db)
     schedule = await engine.schedule_review(user_id, data.concept_id, data.quality)
-    await db.commit()
 
-    return ReviewResponse(
+    # Build response before commit to avoid expired ORM objects
+    response = ReviewResponse(
         concept_id=data.concept_id,
         quality=data.quality,
         new_interval_days=schedule.interval_days,
         new_ease_factor=schedule.ease_factor,
         due_at=schedule.due_at,
     )
+    await db.commit()
+    return response
 
 
 @router.post("/sessions", response_model=RevisionSessionRead, status_code=status.HTTP_201_CREATED)

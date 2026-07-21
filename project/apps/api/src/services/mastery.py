@@ -27,8 +27,16 @@ class MasteryEngine:
         )
         mastery = result.scalar_one_or_none()
         if mastery is None:
-            mastery = ConceptMastery(user_id=user_id, concept_id=concept_id)
+            mastery = ConceptMastery(
+                user_id=user_id,
+                concept_id=concept_id,
+                score=0,
+                confidence=0,
+                attempts=0,
+                correct_streak=0,
+            )
             self.db.add(mastery)
+            await self.db.flush()
         return mastery
 
     async def record_attempt(
