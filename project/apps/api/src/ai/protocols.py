@@ -39,6 +39,9 @@ class AIProvider(Protocol):
         messages: list[Message],
         temperature: float = 0.7,
         max_tokens: int | None = None,
-    ) -> AsyncGenerator[str, None]: ...
+    ) -> AsyncGenerator[str, None]:
+        yield ""
+        raise NotImplementedError
 
-    async def embed(self, text: str, dimensions: int = 1536) -> list[float]: ...
+    async def embed(self, text: str, dimensions: int = 1536) -> list[float]:
+        raise NotImplementedError

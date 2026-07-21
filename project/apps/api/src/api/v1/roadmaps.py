@@ -118,7 +118,7 @@ async def link_course_to_roadmap(
     position: int = 0,
     current_user: User = Depends(require_content_creator),
     db: AsyncSession = Depends(get_db),
-) -> dict:
+) -> dict[str, str]:
     roadmap = await db.execute(select(Roadmap).where(Roadmap.id == roadmap_id))
     if roadmap.scalar_one_or_none() is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Roadmap not found")

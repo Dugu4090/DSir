@@ -49,10 +49,10 @@ async def get_concept_mastery(
     concept_id: UUID,
     current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db),
-) -> ConceptMastery:
+) -> ConceptMasteryRead:
     engine = MasteryEngine(db)
     mastery = await engine.get_mastery(current_user.id, concept_id)
-    return mastery
+    return ConceptMasteryRead.model_validate(mastery)
 
 
 @router.get("/strengths-weaknesses", response_model=StrengthsWeaknesses)
@@ -63,8 +63,8 @@ async def get_strengths_weaknesses(
     engine = MasteryEngine(db)
     strengths, weaknesses = await engine.get_strengths_and_weaknesses(current_user.id)
     return StrengthsWeaknesses(
-        strengths=list(strengths),
-        weaknesses=list(weaknesses),
+        strengths=[ConceptMasteryRead.model_validate(m) for m in strengths],
+        weaknesses=[ConceptMasteryRead.model_validate(m) for m in weaknesses],
     )
 
 
@@ -76,7 +76,7 @@ async def record_attempt(
     difficulty: float = 1.0,
     current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db),
-) -> ConceptMastery:
+) -> ConceptMasteryRead:
     result = await db.execute(select(Concept).where(Concept.id == concept_id))
     if result.scalar_one_or_none() is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Concept not found")
@@ -95,8 +95,8 @@ async def apply_decay(
     concept_id: UUID,
     current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db),
-) -> ConceptMastery:
+) -> ConceptMasteryRead:
     engine = MasteryEngine(db)
     mastery = await engine.apply_decay(current_user.id, concept_id)
     await db.commit()
-    return mastery
+    return ConceptMasteryRead.model_validate(mastery)

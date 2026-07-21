@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from typing import Any
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -19,7 +20,7 @@ class AuditService:
         entity_id: UUID | None = None,
         ip_address: str | None = None,
         user_agent: str | None = None,
-        details: dict | None = None,
+        details: dict[str, Any] | None = None,
     ) -> None:
         entry = AuditLog(
             user_id=user_id,
@@ -38,7 +39,7 @@ async def log_auth_event(
     action: str,
     user_id: UUID | None = None,
     ip_address: str | None = None,
-    details: dict | None = None,
+    details: dict[str, Any] | None = None,
 ) -> None:
     service = AuditService(db)
     await service.log(

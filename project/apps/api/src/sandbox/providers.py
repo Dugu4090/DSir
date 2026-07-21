@@ -66,6 +66,14 @@ class PistonSandbox(CodeSandbox):
                 execution_time_ms=timeout_ms,
                 is_timeout=True,
             )
+        except httpx.HTTPError as exc:
+            return ExecutionResponse(
+                stdout="",
+                stderr=f"Sandbox request failed: {exc}",
+                exit_code=503,
+                execution_time_ms=0,
+                is_timeout=False,
+            )
 
         run = data.get("run", {})
         stdout = run.get("stdout", "")[:10000]

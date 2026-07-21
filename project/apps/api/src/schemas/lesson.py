@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -20,5 +21,5 @@ class LessonRead(BaseModel):
 
 
 class LessonDetail(LessonRead):
-    content: dict
-    meta: dict = {}
+    content: dict[str, Any]
+    meta: dict[str, Any] = {}

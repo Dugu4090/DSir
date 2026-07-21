@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -19,15 +20,15 @@ class ProjectRead(BaseModel):
 
 
 class ProjectDetail(ProjectRead):
-    requirements: dict = {}
-    starter_files: dict = {}
-    meta: dict = {}
+    requirements: dict[str, Any] = {}
+    starter_files: dict[str, Any] = {}
+    meta: dict[str, Any] = {}
 
 
 class ProjectSubmissionCreate(BaseModel):
     project_id: uuid.UUID
     repository_url: str | None = None
-    files: dict | None = None
+    files: dict[str, Any] | None = None
 
 
 class ProjectSubmissionRead(BaseModel):
@@ -44,5 +45,5 @@ class ProjectSubmissionRead(BaseModel):
 
 
 class ProjectSubmissionDetail(ProjectSubmissionRead):
-    files: dict | None = None
-    feedback: dict | None = None
+    files: dict[str, Any] | None = None
+    feedback: dict[str, Any] | None = None

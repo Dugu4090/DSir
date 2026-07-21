@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
@@ -8,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.config import settings
 from src.core.dependencies import get_current_active_user, get_current_user
+from src.core.rate_limit import RateLimiter
 from src.core.security import (
     create_access_token,
     generate_refresh_token,
@@ -37,14 +39,18 @@ async def _create_refresh_token_record(db: AsyncSession, user: User) -> str:
     return raw
 
 
-async def _revoke_all_refresh_tokens(db: AsyncSession, user_id) -> None:
+async def _revoke_all_refresh_tokens(db: AsyncSession, user_id: UUID) -> None:
     result = await db.execute(select(RefreshToken).where(RefreshToken.user_id == user_id))
     for token in result.scalars().all():
         token.revoked = True
 
 
 @router.post("/register", response_model=TokenPair, status_code=status.HTTP_201_CREATED)
-async def register(data: RegisterRequest, db: AsyncSession = Depends(get_db)) -> TokenPair:
+async def register(
+    data: RegisterRequest,
+    db: AsyncSession = Depends(get_db),
+    _rate_limit: None = Depends(RateLimiter("10/minute")),
+) -> TokenPair:
     existing = await db.execute(select(User).where(User.email == data.email))
     if existing.scalar_one_or_none():
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered")
@@ -74,7 +80,11 @@ async def register(data: RegisterRequest, db: AsyncSession = Depends(get_db)) ->
 
 
 @router.post("/login", response_model=TokenPair)
-async def login(data: LoginRequest, db: AsyncSession = Depends(get_db)) -> TokenPair:
+async def login(
+    data: LoginRequest,
+    db: AsyncSession = Depends(get_db),
+    _rate_limit: None = Depends(RateLimiter("10/minute")),
+) -> TokenPair:
     result = await db.execute(select(User).where(User.email == data.email))
     user = result.scalar_one_or_none()
     if not user or not user.hashed_password or not verify_password(data.password, user.hashed_password):
@@ -88,7 +98,11 @@ async def login(data: LoginRequest, db: AsyncSession = Depends(get_db)) -> Token
 
 
 @router.post("/refresh", response_model=TokenPair)
-async def refresh_token(data: RefreshRequest, db: AsyncSession = Depends(get_db)) -> TokenPair:
+async def refresh_token(
+    data: RefreshRequest,
+    db: AsyncSession = Depends(get_db),
+    _rate_limit: None = Depends(RateLimiter("10/minute")),
+) -> TokenPair:
     token_hash = hash_refresh_token(data.refresh_token)
     result = await db.execute(
         select(RefreshToken).where(

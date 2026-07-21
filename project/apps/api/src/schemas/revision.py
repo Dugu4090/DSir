@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -28,7 +29,7 @@ class RevisionSessionRead(BaseModel):
     started_at: datetime
     completed_at: datetime | None = None
     concepts: list[uuid.UUID]
-    results: dict
+    results: dict[str, Any]
 
     class Config:
         from_attributes = True
@@ -49,7 +50,7 @@ class ReviewResponse(BaseModel):
 
 class ActiveRecallProblemRead(BaseModel):
     concept_id: uuid.UUID
-    problem: dict
+    problem: dict[str, Any]
     due_at: datetime | None = None
 
     class Config:
@@ -58,7 +59,7 @@ class ActiveRecallProblemRead(BaseModel):
 
 class ActiveRecallSessionRead(BaseModel):
     session_id: uuid.UUID
-    problems: list[dict]
+    problems: list[ActiveRecallProblemRead]
 
 
 class RevisionAnalyticsRead(BaseModel):

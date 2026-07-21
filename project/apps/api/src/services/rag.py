@@ -1,12 +1,12 @@
 from __future__ import annotations
 
+from typing import Any
 from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.ai.manager import AIManager, get_ai_manager
-from src.db.session import AsyncSessionLocal
 from src.models.knowledge import KnowledgeChunk
 from src.models.learning import ConceptMastery
 
@@ -24,7 +24,7 @@ class RAGService:
         chunk_type: str = "lesson",
         course_id: UUID | None = None,
         concept_id: UUID | None = None,
-        meta: dict | None = None,
+        meta: dict[str, Any] | None = None,
     ) -> KnowledgeChunk:
         """Index a knowledge chunk with an embedding."""
         embedding = await self.ai.embed(content)
@@ -70,7 +70,7 @@ class RAGService:
         dialect = self.db.bind.dialect.name if self.db.bind else "postgresql"
 
         if dialect == "postgresql":
-            from pgvector.sqlalchemy import L2Distance
+            from pgvector.sqlalchemy import L2Distance  # type: ignore[attr-defined]
 
             stmt = select(KnowledgeChunk).order_by(L2Distance(KnowledgeChunk.embedding, embedding))
         else:

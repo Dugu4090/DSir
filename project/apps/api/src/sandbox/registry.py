@@ -28,7 +28,7 @@ class SandboxRegistry:
         provider_cls = cls._providers.get(provider_name)
         if provider_cls is None:
             raise ValueError(f"Unknown sandbox provider: {provider_name}")
-        return provider_cls(**kwargs)  # type: ignore[arg-type]
+        return provider_cls(**kwargs)
 
     @classmethod
     def list_providers(cls) -> list[str]:

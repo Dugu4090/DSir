@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+from datetime import datetime
+from typing import Any, cast
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -36,7 +38,7 @@ async def _get_revision_engine(
 
 @router.get("/due", response_model=list[RevisionScheduleRead])
 async def get_due_revisions(
-    limit: int = 10,
+    limit: int = Query(10, ge=1, le=100),
     current_user: User = Depends(get_current_active_user),
     engine: RevisionEngine = Depends(_get_revision_engine),
 ) -> list[RevisionSchedule]:
@@ -117,13 +119,28 @@ async def start_active_recall_session(
     engine: RevisionEngine = Depends(_get_revision_engine),
     db: AsyncSession = Depends(get_db),
 ) -> ActiveRecallSessionRead:
-    result = await engine.start_active_recall_session(current_user.id, data.concept_ids)
+    result: dict[str, object] = await engine.start_active_recall_session(current_user.id, data.concept_ids)
     await db.commit()
+    raw_problems = cast(list[dict[str, Any]], result["problems"])
+
+    def _parse_due(value: object) -> datetime | None:
+        if value is None:
+            return None
+        if isinstance(value, datetime):
+            return value
+        if isinstance(value, str):
+            return datetime.fromisoformat(value)
+        return None
+
     problems = [
-        ActiveRecallProblemRead(concept_id=p["concept_id"], problem=p["problem"], due_at=p.get("due_at"))
-        for p in result["problems"]
+        ActiveRecallProblemRead(
+            concept_id=UUID(str(p["concept_id"])),
+            problem=cast(dict[str, Any], p["problem"]),
+            due_at=_parse_due(p.get("due_at")),
+        )
+        for p in raw_problems
     ]
-    return ActiveRecallSessionRead(session_id=result["session_id"], problems=problems)
+    return ActiveRecallSessionRead(session_id=UUID(str(result["session_id"])), problems=problems)
 
 
 @router.post("/sessions", response_model=RevisionSessionRead, status_code=status.HTTP_201_CREATED)
@@ -145,7 +162,7 @@ async def start_revision_session(
 @router.put("/sessions/{session_id}/complete", response_model=RevisionSessionRead)
 async def complete_revision_session(
     session_id: UUID,
-    results: dict,
+    results: dict[str, Any],
     current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db),
 ) -> RevisionSession:
@@ -184,5 +201,5 @@ async def get_revision_analytics(
     current_user: User = Depends(get_current_active_user),
     engine: RevisionEngine = Depends(_get_revision_engine),
 ) -> RevisionAnalyticsRead:
-    data = await engine.get_analytics(current_user.id)
+    data = cast(dict[str, int], await engine.get_analytics(current_user.id))
     return RevisionAnalyticsRead(**data)

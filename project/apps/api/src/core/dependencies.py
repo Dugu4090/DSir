@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from collections.abc import Callable
+from typing import Any
 from uuid import UUID
 
 from fastapi import Depends, HTTPException, status
@@ -16,11 +18,14 @@ from src.models.user import User
 security = HTTPBearer(auto_error=False)
 
 
-def _get_token_payload(credentials: HTTPAuthorizationCredentials | None) -> dict | None:
+def _get_token_payload(credentials: HTTPAuthorizationCredentials | None) -> dict[str, Any] | None:
     if not credentials:
         return None
     try:
-        return jwt.decode(credentials.credentials, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        payload: dict[str, Any] | None = jwt.decode(
+            credentials.credentials, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
+        )
+        return payload
     except JWTError:
         return None
 
@@ -58,7 +63,7 @@ async def get_current_active_user(
     return current_user
 
 
-def require_roles(*roles: str):
+def require_roles(*roles: str) -> Callable[..., Any]:
     async def checker(current_user: User = Depends(get_current_active_user)) -> User:
         user_roles = {role.role for role in current_user.roles}
         if not any(role in user_roles for role in roles):

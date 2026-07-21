@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import asyncio
 import os
-from collections.abc import AsyncGenerator
+from collections.abc import AsyncGenerator, Awaitable, Callable
 from functools import wraps
+from typing import Any, ParamSpec, TypeVar
 
 from src.ai.protocols import AIProvider, AIResponse, Message
 from src.ai.providers import (
@@ -19,10 +20,17 @@ class AIError(Exception):
     pass
 
 
-def _with_retries(max_retries: int = 3, backoff: float = 1.0):
-    def decorator(func):
+_P = ParamSpec("_P")
+_R = TypeVar("_R")
+
+
+def _with_retries(
+    max_retries: int = 3,
+    backoff: float = 1.0,
+) -> Callable[[Callable[_P, Awaitable[_R]]], Callable[_P, Awaitable[_R]]]:
+    def decorator(func: Callable[_P, Awaitable[_R]]) -> Callable[_P, Awaitable[_R]]:
         @wraps(func)
-        async def wrapper(*args, **kwargs):
+        async def wrapper(*args: _P.args, **kwargs: _P.kwargs) -> _R:
             last_exc: Exception | None = None
             for attempt in range(max_retries):
                 try:
@@ -74,7 +82,7 @@ class AIManager:
             async for chunk in self.fallback.generate_stream(messages, temperature, max_tokens):
                 yield chunk
 
-    async def generate_text(self, *args, **kwargs) -> str:
+    async def generate_text(self, *args: Any, **kwargs: Any) -> str:
         response = await self.generate(*args, **kwargs)
         return response.content
 

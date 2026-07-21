@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -10,7 +11,7 @@ class SubmissionCreate(BaseModel):
     lesson_id: uuid.UUID | None = None
     concept_id: uuid.UUID | None = None
     submission_type: str
-    payload: dict
+    payload: dict[str, Any]
 
 
 class SubmissionRead(BaseModel):
@@ -28,5 +29,5 @@ class SubmissionRead(BaseModel):
 
 
 class SubmissionDetail(SubmissionRead):
-    payload: dict
-    evaluation: dict | None = None
+    payload: dict[str, Any]
+    evaluation: dict[str, Any] | None = None

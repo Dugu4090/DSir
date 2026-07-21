@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import dataclasses
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -8,8 +9,9 @@ from src.ai.manager import AIManager
 from src.ai.prompts import PromptManager
 from src.ai.protocols import Message, Role
 from src.models.execution import ExecutionHistory
-from src.sandbox.interfaces import CodeSandbox, ExecutionRequest, ExecutionResponse
+from src.sandbox.interfaces import CodeSandbox, ExecutionRequest
 from src.schemas.execution import ExecutionRequest as ExecutionRequestSchema
+from src.schemas.execution import ExecutionResponse as ExecutionResponseSchema
 
 
 class ExecutionService:
@@ -32,7 +34,7 @@ class ExecutionService:
         self,
         user_id: UUID | None,
         request: ExecutionRequestSchema,
-    ) -> tuple[ExecutionResponse, UUID]:
+    ) -> tuple[ExecutionResponseSchema, UUID]:
         """Execute code, log the result, and optionally queue a background AI review.
 
         Returns the execution result and the persisted history entry id.
@@ -56,14 +58,15 @@ class ExecutionService:
         self.db.add(history)
         await self.db.flush()
 
-        result = await self.sandbox.execute(internal_request)
+        raw_result = await self.sandbox.execute(internal_request)
+        result = ExecutionResponseSchema(**dataclasses.asdict(raw_result))
 
-        history.stdout = self._truncate(result.stdout)
-        history.stderr = self._truncate(result.stderr)
-        history.exit_code = result.exit_code
-        history.execution_time_ms = result.execution_time_ms
-        history.is_timeout = result.is_timeout
-        history.status = "success" if result.exit_code == 0 else "error"
+        history.stdout = self._truncate(raw_result.stdout)
+        history.stderr = self._truncate(raw_result.stderr)
+        history.exit_code = raw_result.exit_code
+        history.execution_time_ms = raw_result.execution_time_ms
+        history.is_timeout = raw_result.is_timeout
+        history.status = "success" if raw_result.exit_code == 0 else "error"
         await self.db.commit()
 
         return result, history.id

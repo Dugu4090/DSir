@@ -6,9 +6,13 @@ import pytest_asyncio
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.pool import NullPool
 
+from src.core.config import settings
 from src.db.base import Base
 from src.db.session import get_db
 from src.main import app
+
+# Disable rate limiting in tests; individual test cases can opt-in by overriding.
+settings.RATE_LIMIT_ENABLED = False
 
 TEST_DB_PATH = os.path.join(os.path.dirname(__file__), ".test_db.sqlite")
 TEST_DATABASE_URL = f"sqlite+aiosqlite:///{TEST_DB_PATH}"

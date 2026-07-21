@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.core.dependencies import require_content_creator
 from src.db.session import get_db
 from src.models.content import Concept, Course
+from src.models.user import User
 from src.schemas.common import PaginatedResponse, PaginationParams
 from src.schemas.content import ConceptRead, CourseRead
 
@@ -59,7 +60,7 @@ async def get_course(course_id: UUID, db: AsyncSession = Depends(get_db)) -> Cou
 @router.post("/", response_model=CourseRead, status_code=status.HTTP_201_CREATED)
 async def create_course(
     course: CourseRead,
-    current_user=Depends(require_content_creator),
+    current_user: User = Depends(require_content_creator),
     db: AsyncSession = Depends(get_db),
 ) -> Course:
     existing = await db.execute(select(Course).where(Course.slug == course.slug))

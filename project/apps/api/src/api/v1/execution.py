@@ -2,12 +2,13 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.ai.manager import get_ai_manager
 from src.core.dependencies import get_current_active_user
+from src.core.rate_limit import RateLimiter
 from src.db.session import get_db
 from src.models.execution import ExecutionHistory
 from src.models.user import User
@@ -37,6 +38,7 @@ async def execute_code(
     data: ExecutionRequest,
     current_user: User = Depends(get_current_active_user),
     service: ExecutionService = Depends(_get_execution_service),
+    _rate_limit: None = Depends(RateLimiter("20/minute")),
 ) -> ExecutionResponse:
     result, _ = await service.execute_and_log(
         user_id=current_user.id,
@@ -50,6 +52,7 @@ async def execute_and_review(
     data: ExecutionRequest,
     current_user: User = Depends(get_current_active_user),
     service: ExecutionService = Depends(_get_execution_service),
+    _rate_limit: None = Depends(RateLimiter("20/minute")),
 ) -> ExecutionReviewResponse:
     result, history_id = await service.execute_and_log(
         user_id=current_user.id,
@@ -65,8 +68,8 @@ async def execute_and_review(
 
 @router.get("/history", response_model=list[ExecutionHistoryRead])
 async def list_execution_history(
-    limit: int = 50,
-    offset: int = 0,
+    limit: int = Query(50, ge=1, le=100),
+    offset: int = Query(0, ge=0),
     current_user: User = Depends(get_current_active_user),
     service: ExecutionService = Depends(_get_execution_service),
 ) -> list[ExecutionHistoryRead]:

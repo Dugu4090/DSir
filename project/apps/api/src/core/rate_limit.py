@@ -14,7 +14,7 @@ try:
 
     HAS_REDIS = True
 except ImportError:  # pragma: no cover
-    HAS_REDIS = False  # type: ignore
+    HAS_REDIS = False
 
 
 class _MemoryStore:
@@ -26,7 +26,10 @@ class _MemoryStore:
         async with self._lock:
             cutoff = now - window
             current = [ts for ts in self._data[key] if ts > cutoff]
-            self._data[key] = current
+            if not current:
+                self._data.pop(key, None)
+            else:
+                self._data[key] = current
             if len(current) >= limit:
                 return len(current)
             current.append(now)
@@ -36,7 +39,7 @@ class _MemoryStore:
 
 _memory_store = _MemoryStore()
 
-_redis_client = redis.from_url(settings.REDIS_URL) if HAS_REDIS else None
+_redis_client = redis.from_url(settings.REDIS_URL) if HAS_REDIS else None  # type: ignore[no-untyped-call]
 
 
 class RateLimitExceeded(HTTPException):
@@ -66,6 +69,8 @@ class RateLimiter:
         self.limit, self.window = _parse_rate(rate)
 
     async def check(self, key: str) -> None:
+        if not settings.RATE_LIMIT_ENABLED:
+            return
         if _redis_client is not None:
             now = int(time.time())
             window_key = f"rate_limit:{key}:{now // self.window}"
@@ -78,6 +83,12 @@ class RateLimiter:
             count = await _memory_store.increment(key, self.window, self.limit)
             if count > self.limit:
                 raise RateLimitExceeded()
+
+    async def __call__(self, request: Request) -> None:
+        if not settings.RATE_LIMIT_ENABLED:
+            return
+        key = rate_limit_key(request)
+        await self.check(key)
 
 
 def rate_limit_key(request: Request, suffix: str | None = None) -> str:

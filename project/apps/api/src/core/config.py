@@ -24,6 +24,7 @@ class Settings(BaseSettings):
     OLLAMA_BASE_URL: str | None = None
 
     # Rate limiting (requests per minute)
+    RATE_LIMIT_ENABLED: bool = True
     RATE_LIMIT_DEFAULT: str = "100/minute"
     RATE_LIMIT_AUTH: str = "10/minute"
 
@@ -35,6 +36,9 @@ class Settings(BaseSettings):
     # Workers
     CELERY_BROKER_URL: str | None = None
     CELERY_RESULT_BACKEND: str | None = None
+
+    # Observability
+    LOG_LEVEL: str = "INFO"
 
     class Config:
         env_file = ".env"

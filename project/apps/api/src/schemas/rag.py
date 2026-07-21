@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -11,7 +12,7 @@ class KnowledgeChunkCreate(BaseModel):
     chunk_type: str = "lesson"
     course_id: uuid.UUID | None = None
     concept_id: uuid.UUID | None = None
-    meta: dict = {}
+    meta: dict[str, Any] = {}
 
 
 class KnowledgeChunkRead(BaseModel):
@@ -20,7 +21,7 @@ class KnowledgeChunkRead(BaseModel):
     concept_id: uuid.UUID | None
     chunk_type: str
     content: str
-    meta: dict
+    meta: dict[str, Any]
     created_at: datetime
 
     class Config:

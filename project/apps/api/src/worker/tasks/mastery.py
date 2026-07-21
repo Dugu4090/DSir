@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from typing import Any
 from uuid import UUID
 
 from sqlalchemy import select
@@ -17,8 +18,8 @@ from src.worker.utils import async_to_sync
     default_retry_delay=60,
     autoretry_for=(Exception,),
     queue="mastery",
-)
-def apply_decay_for_mastery(self, user_id: str, concept_id: str) -> dict[str, object]:
+)  # type: ignore[untyped-decorator]
+def apply_decay_for_mastery(self: Any, user_id: str, concept_id: str) -> dict[str, object]:
     """Apply mastery decay for a single user/concept pair."""
 
     async def _run() -> dict[str, object]:
@@ -42,8 +43,8 @@ def apply_decay_for_mastery(self, user_id: str, concept_id: str) -> dict[str, ob
     default_retry_delay=60,
     autoretry_for=(Exception,),
     queue="mastery",
-)
-def apply_decay_all(self) -> dict[str, int]:
+)  # type: ignore[untyped-decorator]
+def apply_decay_all(self: Any) -> dict[str, int]:
     """Apply mastery decay to all masteries that haven't been reviewed recently."""
 
     async def _run() -> dict[str, int]:

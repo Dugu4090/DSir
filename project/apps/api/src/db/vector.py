@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import Any
 
 from sqlalchemy import JSON
-from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.types import TypeDecorator
 
 
@@ -28,4 +27,4 @@ class VectorType(TypeDecorator[list[float] | None]):
         return value
 
     def process_result_value(self, value: Any, dialect: Any) -> list[float] | None:  # noqa: ARG002
-        return value
+        return value if isinstance(value, list) else None

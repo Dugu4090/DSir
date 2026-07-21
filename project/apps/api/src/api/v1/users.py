@@ -71,7 +71,7 @@ async def add_role(
     role: str,
     current_user: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
-) -> dict:
+) -> dict[str, str]:
     result = await db.execute(select(User).where(User.id == user_id))
     user = result.scalar_one_or_none()
     if user is None:

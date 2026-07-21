@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from typing import Any
 from uuid import UUID
 
 from sqlalchemy import select
@@ -18,8 +19,8 @@ from src.worker.utils import async_to_sync
     default_retry_delay=60,
     autoretry_for=(Exception,),
     queue="revision",
-)
-def pregenerate_revisions_for_user(self, user_id: str) -> dict[str, int]:
+)  # type: ignore[untyped-decorator]
+def pregenerate_revisions_for_user(self: Any, user_id: str) -> dict[str, int]:
     """Pre-generate active recall problems for a single user's due concepts."""
 
     async def _run() -> dict[str, int]:
@@ -46,8 +47,8 @@ def pregenerate_revisions_for_user(self, user_id: str) -> dict[str, int]:
     default_retry_delay=60,
     autoretry_for=(Exception,),
     queue="revision",
-)
-def pregenerate_all(self) -> dict[str, int]:
+)  # type: ignore[untyped-decorator]
+def pregenerate_all(self: Any) -> dict[str, int]:
     """Pre-generate revision problems for all active learners."""
 
     async def _run() -> dict[str, int]:

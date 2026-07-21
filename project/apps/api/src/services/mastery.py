@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import math
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING
 from uuid import UUID
 
@@ -20,10 +20,12 @@ class MasteryEngine:
 
     async def get_mastery(self, user_id: UUID, concept_id: UUID) -> ConceptMastery:
         result = await self.db.execute(
-            select(ConceptMastery).where(
+            select(ConceptMastery)
+            .where(
                 ConceptMastery.user_id == user_id,
                 ConceptMastery.concept_id == concept_id,
             )
+            .with_for_update()
         )
         mastery = result.scalar_one_or_none()
         if mastery is None:
@@ -70,6 +72,7 @@ class MasteryEngine:
             mastery.confidence = max(0, mastery.confidence - 10)
 
         mastery.last_reviewed_at = datetime.now(UTC)
+        mastery.next_review_at = datetime.now(UTC) + timedelta(days=1)
         mastery.updated_at = datetime.now(UTC)
         await self.db.flush()
         return mastery
@@ -97,6 +100,7 @@ class MasteryEngine:
             mastery.correct_streak = 0
         mastery.confidence = min(100, mastery.confidence + self._confidence_gain(mastery))
         mastery.last_reviewed_at = datetime.now(UTC)
+        mastery.next_review_at = datetime.now(UTC) + timedelta(days=1)
         mastery.updated_at = datetime.now(UTC)
         await self.db.flush()
         return mastery
@@ -135,6 +139,7 @@ class MasteryEngine:
 
         mastery.score = int(mastery.score * score_decay)
         mastery.confidence = int(mastery.confidence * confidence_decay)
+        mastery.next_review_at = None
         mastery.updated_at = datetime.now(UTC)
         await self.db.flush()
         return mastery
@@ -154,7 +159,7 @@ class MasteryEngine:
         """Average mastery gain per day over the last window_days."""
         from src.models.learning import ConceptMastery
 
-        cutoff = datetime.now(UTC) - __import__("datetime").timedelta(days=window_days)
+        cutoff = datetime.now(UTC) - timedelta(days=window_days)
         result = await self.db.execute(
             select(ConceptMastery).where(
                 ConceptMastery.user_id == user_id,

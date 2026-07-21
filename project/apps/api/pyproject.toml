@@ -54,6 +54,18 @@ warn_unused_ignores = true
 explicit_package_bases = true
 namespace_packages = true
 
+[[tool.mypy.overrides]]
+module = [
+    "anthropic.*",
+    "google.*",
+    "openai.*",
+    "jose.*",
+    "passlib.*",
+    "pgvector.*",
+    "celery.*"
+]
+ignore_missing_imports = true
+
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]

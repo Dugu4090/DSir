@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TypeVar
+from typing import Any
 
 from pydantic import BaseModel
 from sqlalchemy import func, select
@@ -9,14 +9,12 @@ from sqlalchemy.sql import Select
 
 from src.schemas.common import PaginatedResponse, PaginationParams
 
-T = TypeVar("T", bound=BaseModel)
-
 
 async def paginated_response(
     db: AsyncSession,
-    query: Select,
+    query: Select[tuple[Any]],
     pagination: PaginationParams,
-    schema: type[T],
+    schema: type[BaseModel],
 ) -> PaginatedResponse:
     total_result = await db.execute(select(func.count()).select_from(query.subquery()))
     total = total_result.scalar_one()

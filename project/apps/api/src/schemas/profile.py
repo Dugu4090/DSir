@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any
+
 from pydantic import BaseModel
 
 
@@ -8,7 +10,7 @@ class ProfileUpdate(BaseModel):
     timezone: str | None = None
     daily_goal_minutes: int | None = None
     preferred_language: str | None = None
-    preferences: dict | None = None
+    preferences: dict[str, Any] | None = None
 
 
 class ProfileRead(BaseModel):
@@ -17,7 +19,7 @@ class ProfileRead(BaseModel):
     daily_goal_minutes: int = 30
     preferred_language: str = "en"
     onboarding_completed: bool = False
-    preferences: dict = {}
+    preferences: dict[str, Any] = {}
 
     class Config:
         from_attributes = True
