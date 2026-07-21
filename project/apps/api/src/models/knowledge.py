@@ -19,7 +19,8 @@ class KnowledgeChunk(Base):
         Index(
             "ix_knowledge_chunks_embedding",
             "embedding",
-            postgresql_using="ivfflat",
+            postgresql_using="hnsw",
+            postgresql_with={"m": 16, "ef_construction": 64},
         ),
     )
 

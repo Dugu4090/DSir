@@ -153,6 +153,9 @@ class AnthropicProvider(AIProvider):
             async for text in stream.text_stream:
                 yield text
 
+    async def embed(self, text: str, dimensions: int = 1536) -> list[float]:
+        raise NotImplementedError("Anthropic does not provide a public embedding API")
+
 
 class GeminiProvider(AIProvider):
     def __init__(self, api_key: str | None = None, model: str = "gemini-1.5-flash"):
@@ -193,6 +196,9 @@ class GeminiProvider(AIProvider):
             text = chunk.text or ""
             if text:
                 yield text
+
+    async def embed(self, text: str, dimensions: int = 1536) -> list[float]:
+        raise NotImplementedError("Gemini does not provide a public embedding API")
 
 
 class OllamaProvider(AIProvider):
@@ -249,3 +255,13 @@ class OllamaProvider(AIProvider):
                             yield content
                     except json.JSONDecodeError:
                         continue
+
+    async def embed(self, text: str, dimensions: int = 1536) -> list[float]:
+        import httpx
+
+        payload = {"model": self.model, "prompt": text}
+        async with httpx.AsyncClient() as client:
+            response = await client.post(f"{self.base_url}/api/embeddings", json=payload)
+            response.raise_for_status()
+            data = response.json()
+        return list(data.get("embedding", []))

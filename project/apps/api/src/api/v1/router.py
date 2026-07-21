@@ -10,6 +10,7 @@ from src.api.v1 import (
     mastery,
     profiles,
     projects,
+    rag,
     revision,
     roadmaps,
     submissions,
@@ -32,4 +33,5 @@ api_router.include_router(revision.router, prefix="/revision", tags=["revision"]
 api_router.include_router(projects.router, prefix="/projects", tags=["projects"])
 api_router.include_router(ai.router, prefix="/ai", tags=["ai"])
 api_router.include_router(execution.router, prefix="/execution", tags=["execution"])
+api_router.include_router(rag.router, prefix="/rag", tags=["rag"])
 api_router.include_router(worker.router, prefix="/worker", tags=["worker"])

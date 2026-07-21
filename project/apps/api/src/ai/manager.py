@@ -78,6 +78,9 @@ class AIManager:
         response = await self.generate(*args, **kwargs)
         return response.content
 
+    async def embed(self, text: str, dimensions: int = 1536) -> list[float]:
+        return await self.primary.embed(text, dimensions=dimensions)
+
 
 def get_ai_manager(provider_name: str | None = None) -> AIManager:
     from src.core.config import settings

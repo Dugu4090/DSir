@@ -1,59 +1,22 @@
 from __future__ import annotations
 
-import os
-import random
 from uuid import UUID
 
-import httpx
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.core.config import settings
+from src.ai.manager import AIManager, get_ai_manager
 from src.db.session import AsyncSessionLocal
 from src.models.knowledge import KnowledgeChunk
 from src.models.learning import ConceptMastery
 
 
-class EmbeddingProvider:
-    """Generate vector embeddings for text."""
-
-    def __init__(self, dimensions: int = 1536, api_key: str | None = None):
-        self.dimensions = dimensions
-        self.api_key = api_key or settings.OPENAI_API_KEY
-
-    async def embed(self, text: str) -> list[float]:
-        """Return an embedding vector for the given text."""
-        if self.api_key:
-            return await self._openai_embed(text)
-        return self._mock_embed(text)
-
-    async def _openai_embed(self, text: str) -> list[float]:
-        async with httpx.AsyncClient() as client:
-            response = await client.post(
-                "https://api.openai.com/v1/embeddings",
-                headers={
-                    "Authorization": f"Bearer {self.api_key}",
-                    "Content-Type": "application/json",
-                },
-                json={"input": text, "model": "text-embedding-3-small"},
-                timeout=30.0,
-            )
-            response.raise_for_status()
-            data = response.json()
-            return list(data["data"][0]["embedding"])
-
-    def _mock_embed(self, text: str) -> list[float]:
-        """Deterministic mock embedding for testing and local development."""
-        random.seed(text)
-        return [random.uniform(-1, 1) for _ in range(self.dimensions)]  # noqa: S311
-
-
 class RAGService:
     """Service for semantic search over knowledge chunks."""
 
-    def __init__(self, db: AsyncSession, embedding_provider: EmbeddingProvider | None = None):
+    def __init__(self, db: AsyncSession, ai: AIManager | None = None):
         self.db = db
-        self.embedding_provider = embedding_provider or EmbeddingProvider()
+        self.ai = ai or get_ai_manager()
 
     async def index_chunk(
         self,
@@ -64,7 +27,7 @@ class RAGService:
         meta: dict | None = None,
     ) -> KnowledgeChunk:
         """Index a knowledge chunk with an embedding."""
-        embedding = await self.embedding_provider.embed(content)
+        embedding = await self.ai.embed(content)
         chunk = KnowledgeChunk(
             course_id=course_id,
             concept_id=concept_id,
@@ -85,7 +48,7 @@ class RAGService:
         concept_id: UUID | None = None,
     ) -> list[KnowledgeChunk]:
         """Semantic search over knowledge chunks."""
-        embedding = await self.embedding_provider.embed(query)
+        embedding = await self.ai.embed(query)
         dialect = self.db.bind.dialect.name if self.db.bind else "postgresql"
 
         if dialect == "postgresql":
@@ -129,7 +92,7 @@ class RAGService:
         return await self.search(query, limit=limit, course_id=course_id)
 
 
-def get_rag_service() -> RAGService:
-    """Factory for RAGService using the async session factory."""
-    # Synchronous factory; the caller is responsible for providing a session.
-    return RAGService(AsyncSessionLocal())
+async def get_rag_service() -> RAGService:
+    """Factory for RAGService using a fresh async session."""
+    async with AsyncSessionLocal() as db:
+        return RAGService(db, get_ai_manager())
