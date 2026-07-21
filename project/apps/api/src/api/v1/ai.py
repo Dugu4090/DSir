@@ -4,13 +4,9 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 
 from src.ai.manager import get_ai_manager
+from src.ai.prompts import PromptManager
 from src.ai.protocols import Message, Role
-from src.schemas.ai import (
-    ChatRequest,
-    ChatResponse,
-    CodeReviewRequest,
-    CodeReviewResponse,
-)
+from src.schemas.ai import ChatRequest, ChatResponse, CodeReviewRequest, CodeReviewResponse
 
 router = APIRouter()
 
@@ -27,7 +23,12 @@ async def chat(data: ChatRequest) -> ChatResponse:
     ]
 
     response = await manager.generate(messages, data.temperature, data.max_tokens)
-    return ChatResponse(content=response, model="")
+    return ChatResponse(
+        content=response.content,
+        model=response.model,
+        prompt_tokens=response.prompt_tokens,
+        completion_tokens=response.completion_tokens,
+    )
 
 
 @router.post("/chat/stream")
@@ -52,22 +53,17 @@ async def chat_stream(data: ChatRequest):
 @router.post("/code-review", response_model=CodeReviewResponse)
 async def code_review(data: CodeReviewRequest) -> CodeReviewResponse:
     manager = get_ai_manager()
-    context = data.context or ""
-    prompt = f"""Review the following {data.language} code for correctness, style, performance, and edge cases.
-
-{context}
-
-```{data.language}
-{data.code}
-```
-
-Provide feedback, specific suggestions for improvement, and identify any issues or bugs."""
+    prompt = PromptManager.get("code-review").render(
+        language=data.language,
+        code=data.code,
+        context=data.context or "",
+    )
 
     messages = [Message(role=Role.USER, content=prompt)]
     response = await manager.generate(messages)
 
     return CodeReviewResponse(
-        feedback=response,
+        feedback=response.content,
         suggestions=[],
         issues=[],
     )
@@ -76,12 +72,13 @@ Provide feedback, specific suggestions for improvement, and identify any issues 
 @router.post("/hints", response_model=ChatResponse)
 async def generate_hint(concept_slug: str, problem: str) -> ChatResponse:
     manager = get_ai_manager()
-    prompt = f"""You are a programming mentor. A learner is working on a problem about "{concept_slug}".
-
-Problem: {problem}
-
-Provide a helpful hint that guides them toward the solution without giving it away completely."""
+    prompt = PromptManager.get("hint").render(concept=concept_slug, problem=problem)
 
     messages = [Message(role=Role.USER, content=prompt)]
     response = await manager.generate(messages)
-    return ChatResponse(content=response, model="")
+    return ChatResponse(
+        content=response.content,
+        model=response.model,
+        prompt_tokens=response.prompt_tokens,
+        completion_tokens=response.completion_tokens,
+    )

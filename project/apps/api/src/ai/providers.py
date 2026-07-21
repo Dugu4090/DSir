@@ -34,7 +34,10 @@ class MockProvider(AIProvider):
 
 class OpenAIProvider(AIProvider):
     def __init__(self, api_key: str | None = None, model: str = "gpt-4o-mini"):
-        import openai
+        try:
+            import openai
+        except ImportError as exc:
+            raise ImportError("OpenAI SDK not installed. Install with `pip install openai`") from exc
 
         self.client = openai.AsyncOpenAI(api_key=api_key or os.getenv("OPENAI_API_KEY"))
         self.model = model
@@ -82,7 +85,10 @@ class OpenAIProvider(AIProvider):
 
 class AnthropicProvider(AIProvider):
     def __init__(self, api_key: str | None = None, model: str = "claude-3-5-sonnet-20240620"):
-        import anthropic
+        try:
+            import anthropic
+        except ImportError as exc:
+            raise ImportError("Anthropic SDK not installed. Install with `pip install anthropic`") from exc
 
         self.client = anthropic.AsyncAnthropic(api_key=api_key or os.getenv("ANTHROPIC_API_KEY"))
         self.model = model
@@ -135,7 +141,10 @@ class AnthropicProvider(AIProvider):
 
 class GeminiProvider(AIProvider):
     def __init__(self, api_key: str | None = None, model: str = "gemini-1.5-flash"):
-        import google.generativeai as genai
+        try:
+            import google.generativeai as genai
+        except ImportError as exc:
+            raise ImportError("Google Generative AI SDK not installed. Install with `pip install google-generativeai`") from exc
 
         genai.configure(api_key=api_key or os.getenv("GEMINI_API_KEY"))
         self.model = model

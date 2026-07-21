@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import asyncio
+import os
 from collections.abc import AsyncGenerator
+from functools import wraps
 
-from src.ai.protocols import AIProvider, Message
+from src.ai.protocols import AIProvider, AIResponse, Message
 from src.ai.providers import (
     AnthropicProvider,
     GeminiProvider,
@@ -12,26 +15,51 @@ from src.ai.providers import (
 )
 
 
+class AIException(Exception):
+    pass
+
+
+def _with_retries(max_retries: int = 3, backoff: float = 1.0):
+    def decorator(func):
+        @wraps(func)
+        async def wrapper(*args, **kwargs):
+            last_exc: Exception | None = None
+            for attempt in range(max_retries):
+                try:
+                    return await func(*args, **kwargs)
+                except Exception as exc:
+                    last_exc = exc
+                    await asyncio.sleep(backoff * (2**attempt))
+            raise AIException(f"AI provider failed after {max_retries} attempts: {last_exc}")
+
+        return wrapper
+
+    return decorator
+
+
 class AIManager:
     def __init__(self, primary: AIProvider, fallback: AIProvider | None = None):
         self.primary = primary
         self.fallback = fallback
 
+    @_with_retries()
     async def generate(
         self,
         messages: list[Message],
         temperature: float = 0.7,
         max_tokens: int | None = None,
-    ) -> str:
+    ) -> AIResponse:
         try:
-            response = await self.primary.generate(messages, temperature, max_tokens)
-            return response.content
-        except Exception:
+            return await self.primary.generate(messages, temperature, max_tokens)
+        except Exception as exc:
             if self.fallback is None:
                 raise
-            response = await self.fallback.generate(messages, temperature, max_tokens)
-            return response.content
+            try:
+                return await self.fallback.generate(messages, temperature, max_tokens)
+            except Exception as exc2:
+                raise AIException("Primary and fallback AI providers failed") from exc2
 
+    @_with_retries()
     async def generate_stream(
         self,
         messages: list[Message],
@@ -41,11 +69,15 @@ class AIManager:
         try:
             async for chunk in self.primary.generate_stream(messages, temperature, max_tokens):
                 yield chunk
-        except Exception:
+        except Exception as exc:
             if self.fallback is None:
                 raise
             async for chunk in self.fallback.generate_stream(messages, temperature, max_tokens):
                 yield chunk
+
+    async def generate_text(self, *args, **kwargs) -> str:
+        response = await self.generate(*args, **kwargs)
+        return response.content
 
 
 def get_ai_manager(provider_name: str | None = None) -> AIManager:
@@ -60,11 +92,11 @@ def get_ai_manager(provider_name: str | None = None) -> AIManager:
 
 def _build_provider(name: str) -> AIProvider:
     if name == "openai":
-        return OpenAIProvider()
+        return OpenAIProvider(api_key=os.getenv("OPENAI_API_KEY"))
     if name == "anthropic":
-        return AnthropicProvider()
+        return AnthropicProvider(api_key=os.getenv("ANTHROPIC_API_KEY"))
     if name == "gemini":
-        return GeminiProvider()
+        return GeminiProvider(api_key=os.getenv("GEMINI_API_KEY"))
     if name == "ollama":
-        return OllamaProvider()
+        return OllamaProvider(base_url=os.getenv("OLLAMA_BASE_URL"))
     return MockProvider()
