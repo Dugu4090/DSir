@@ -144,7 +144,10 @@ class GeminiProvider(AIProvider):
         try:
             import google.generativeai as genai
         except ImportError as exc:
-            raise ImportError("Google Generative AI SDK not installed. Install with `pip install google-generativeai`") from exc
+            raise ImportError(
+                "Google Generative AI SDK not installed. "
+                "Install with `pip install google-generativeai`"
+            ) from exc
 
         genai.configure(api_key=api_key or os.getenv("GEMINI_API_KEY"))
         self.model = model

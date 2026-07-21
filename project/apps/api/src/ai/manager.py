@@ -15,7 +15,7 @@ from src.ai.providers import (
 )
 
 
-class AIException(Exception):
+class AIError(Exception):
     pass
 
 
@@ -30,7 +30,7 @@ def _with_retries(max_retries: int = 3, backoff: float = 1.0):
                 except Exception as exc:
                     last_exc = exc
                     await asyncio.sleep(backoff * (2**attempt))
-            raise AIException(f"AI provider failed after {max_retries} attempts: {last_exc}")
+            raise AIError(f"AI provider failed after {max_retries} attempts: {last_exc}")
 
         return wrapper
 
@@ -57,7 +57,7 @@ class AIManager:
             try:
                 return await self.fallback.generate(messages, temperature, max_tokens)
             except Exception as exc2:
-                raise AIException("Primary and fallback AI providers failed") from exc2
+                raise AIError("Primary and fallback AI providers failed") from exc2
 
     async def generate_stream(
         self,

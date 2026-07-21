@@ -21,7 +21,7 @@ Context: {context}
 
 Learner question: {question}
 
-Provide a helpful, encouraging explanation that guides the learner toward understanding. Do not give the full answer if the question is an exercise.""",
+Provide a helpful, encouraging explanation that guides the learner.""",
 )
 
 CODE_REVIEW_PROMPT = PromptTemplate(
@@ -34,7 +34,7 @@ Context: {context}
 {code}
 ```
 
-Provide feedback, specific suggestions for improvement, and identify any issues or bugs.""",
+Provide feedback, specific suggestions, and identify any issues or bugs.""",
 )
 
 HINT_PROMPT = PromptTemplate(
@@ -43,17 +43,19 @@ HINT_PROMPT = PromptTemplate(
 
 Problem: {problem}
 
-Provide a helpful hint that guides them toward the solution without giving it away completely.""",
+Provide a helpful hint that guides them without giving the answer.""",
 )
 
 REVISION_PROBLEM_PROMPT = PromptTemplate(
     name="revision-problem",
-    template="""You are an adaptive revision engine. Create a fresh practice problem for the concept "{concept}".
-
-Difficulty target: {difficulty}
-Learner recent mistakes: {mistakes}
-
-Generate a concise problem statement and, if applicable, example input/output. Do not include the answer.""",
+    template=(
+        "You are an adaptive revision engine. Create a fresh practice problem for the concept "
+        "\"{concept}\".\n\n"
+        "Difficulty target: {difficulty}\n"
+        "Learner recent mistakes: {mistakes}\n\n"
+        "Generate a concise problem statement and example input/output. "
+        "Do not include the answer."
+    ),
 )
 
 
