@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import math
+from collections import deque
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 from uuid import UUID
@@ -62,13 +63,40 @@ class MasteryEngine:
             mastery.correct_streak += 1
             gain = self._calculate_gain(mastery, difficulty * weight)
             mastery.score = min(100, mastery.score + gain)
-            mastery.confidence = min(100, mastery.confidence + 5)
+            mastery.confidence = min(100, mastery.confidence + self._confidence_gain(mastery))
         else:
             mastery.correct_streak = 0
             penalty = self._calculate_penalty(mastery)
             mastery.score = max(0, mastery.score - penalty)
             mastery.confidence = max(0, mastery.confidence - 10)
 
+        mastery.last_reviewed_at = datetime.now(UTC)
+        mastery.updated_at = datetime.now(UTC)
+        await self.db.flush()
+        return mastery
+
+    async def record_score(
+        self,
+        user_id: UUID,
+        concept_id: UUID,
+        score: int,
+        source: str = "assessment",
+        difficulty: float = 1.0,
+    ) -> ConceptMastery:
+        """Record a 0-100 score from a project or assessment."""
+        mastery = await self.get_mastery(user_id, concept_id)
+        normalized = max(0, min(100, score))
+        weight = {"project": 1.5, "assessment": 2.0}.get(source, 1.0) * difficulty
+        current = mastery.score
+        # Move score toward the new score, weighted by source weight
+        new_score = (current * (1 - 0.1 * weight)) + (normalized * 0.1 * weight)
+        mastery.score = max(0, min(100, int(new_score)))
+        mastery.attempts += 1
+        if normalized >= 80:
+            mastery.correct_streak += 1
+        else:
+            mastery.correct_streak = 0
+        mastery.confidence = min(100, mastery.confidence + self._confidence_gain(mastery))
         mastery.last_reviewed_at = datetime.now(UTC)
         mastery.updated_at = datetime.now(UTC)
         await self.db.flush()
@@ -84,6 +112,14 @@ class MasteryEngine:
         confidence_factor = 1 + (mastery.confidence / 100)
         return int(10 * confidence_factor)
 
+    def _confidence_gain(self, mastery: ConceptMastery) -> int:
+        # Confidence grows faster early, then plateaus
+        if mastery.confidence >= 90:
+            return 1
+        if mastery.confidence >= 70:
+            return 3
+        return 5
+
     async def apply_decay(self, user_id: UUID, concept_id: UUID) -> ConceptMastery:
         mastery = await self.get_mastery(user_id, concept_id)
         if mastery.last_reviewed_at is None:
@@ -93,11 +129,12 @@ class MasteryEngine:
         if days_since_review <= 0:
             return mastery
 
-        lambda_decay = 0.05
-        decay_factor = math.exp(-lambda_decay * days_since_review)
+        # Decay slower for high confidence
+        lambda_decay = 0.03 + max(0, 0.07 - (mastery.confidence / 1000))
         confidence_decay = math.exp(-lambda_decay * days_since_review * 0.5)
+        score_decay = math.exp(-lambda_decay * days_since_review)
 
-        mastery.score = int(mastery.score * decay_factor)
+        mastery.score = int(mastery.score * score_decay)
         mastery.confidence = int(mastery.confidence * confidence_decay)
         mastery.updated_at = datetime.now(UTC)
         await self.db.flush()
@@ -113,3 +150,19 @@ class MasteryEngine:
         strengths = [m for m in masteries if m.score >= 80 and m.confidence >= 70]
         weaknesses = [m for m in masteries if m.score < 50 or m.confidence < 40]
         return strengths, weaknesses
+
+    async def learning_velocity(self, user_id: UUID, window_days: int = 30) -> float:
+        """Average mastery gain per day over the last window_days."""
+        from src.models.learning import ConceptMastery
+
+        cutoff = datetime.now(UTC) - __import__("datetime").timedelta(days=window_days)
+        result = await self.db.execute(
+            select(ConceptMastery).where(
+                ConceptMastery.user_id == user_id,
+                ConceptMastery.updated_at >= cutoff,
+            )
+        )
+        masteries = result.scalars().all()
+        if not masteries:
+            return 0.0
+        return sum(m.score for m in masteries) / window_days
