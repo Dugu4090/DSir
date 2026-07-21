@@ -51,7 +51,7 @@ class AIManager:
     ) -> AIResponse:
         try:
             return await self.primary.generate(messages, temperature, max_tokens)
-        except Exception as exc:
+        except Exception:
             if self.fallback is None:
                 raise
             try:
@@ -59,7 +59,6 @@ class AIManager:
             except Exception as exc2:
                 raise AIException("Primary and fallback AI providers failed") from exc2
 
-    @_with_retries()
     async def generate_stream(
         self,
         messages: list[Message],
@@ -69,7 +68,7 @@ class AIManager:
         try:
             async for chunk in self.primary.generate_stream(messages, temperature, max_tokens):
                 yield chunk
-        except Exception as exc:
+        except Exception:
             if self.fallback is None:
                 raise
             async for chunk in self.fallback.generate_stream(messages, temperature, max_tokens):
