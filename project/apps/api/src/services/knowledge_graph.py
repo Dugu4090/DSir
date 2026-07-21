@@ -8,7 +8,7 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.models.content import Concept
+from src.models.content import Concept, Course, Roadmap, RoadmapCourse
 
 if TYPE_CHECKING:
     pass
@@ -20,6 +20,12 @@ class GraphNode:
     title: str
     slug: str
     prerequisites: list[UUID] = field(default_factory=list)
+
+
+@dataclass
+class RoadmapGraph:
+    roadmap_id: UUID
+    courses: list[UUID]
 
 
 class KnowledgeGraph:
@@ -100,3 +106,36 @@ class KnowledgeGraph:
             if set(node.prerequisites or []).issubset(mastered_concepts):
                 unlocked.append(cid)
         return unlocked
+
+    async def build_roadmap_graph(self, roadmap_id: UUID) -> RoadmapGraph:
+        result = await self.db.execute(
+            select(RoadmapCourse)
+            .where(RoadmapCourse.roadmap_id == roadmap_id)
+            .order_by(RoadmapCourse.position)
+        )
+        links = result.scalars().all()
+        return RoadmapGraph(
+            roadmap_id=roadmap_id,
+            courses=[link.course_id for link in links],
+        )
+
+    async def generate_learning_path(
+        self,
+        roadmap_id: UUID,
+        mastered_concepts: set[UUID],
+    ) -> list[UUID]:
+        roadmap_graph = await self.build_roadmap_graph(roadmap_id)
+        path: list[UUID] = []
+        for course_id in roadmap_graph.courses:
+            ordered = await self.topological_sort(course_id)
+            for concept_id in ordered:
+                if concept_id not in mastered_concepts:
+                    prereqs_satisfied = await self.is_prereq_chain_satisfied(
+                        concept_id, mastered_concepts
+                    )
+                    if prereqs_satisfied:
+                        path.append(concept_id)
+        return path
+
+    async def validate_prerequisites(self, concept_id: UUID, mastered_concepts: set[UUID]) -> bool:
+        return await self.is_prereq_chain_satisfied(concept_id, mastered_concepts)

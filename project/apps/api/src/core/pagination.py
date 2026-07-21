@@ -1,16 +1,22 @@
 from __future__ import annotations
 
+from typing import Any, TypeVar
+
+from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import Select
 
 from src.schemas.common import PaginatedResponse, PaginationParams
 
+T = TypeVar("T", bound=BaseModel)
 
-async def paginate(
+
+async def paginated_response(
     db: AsyncSession,
     query: Select,
     pagination: PaginationParams,
+    schema: type[T],
 ) -> PaginatedResponse:
     total_result = await db.execute(select(func.count()).select_from(query.subquery()))
     total = total_result.scalar_one()
@@ -20,7 +26,7 @@ async def paginate(
     items = result.scalars().all()
 
     return PaginatedResponse(
-        items=list(items),
+        items=[schema.model_validate(item).model_dump() for item in items],
         total=total,
         page=pagination.page,
         per_page=pagination.per_page,

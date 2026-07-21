@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.core.dependencies import get_current_active_user
 from src.db.session import get_db
 from src.models.user import User, UserProfile
 from src.schemas.profile import ProfileRead, ProfileUpdate
@@ -13,28 +14,29 @@ from src.schemas.profile import ProfileRead, ProfileUpdate
 router = APIRouter()
 
 
-@router.get("/{user_id}", response_model=ProfileRead)
-async def get_profile(user_id: UUID, db: AsyncSession = Depends(get_db)) -> UserProfile:
-    result = await db.execute(select(UserProfile).where(UserProfile.user_id == user_id))
+@router.get("/me", response_model=ProfileRead)
+async def get_profile(
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+) -> UserProfile:
+    result = await db.execute(select(UserProfile).where(UserProfile.user_id == current_user.id))
     profile = result.scalar_one_or_none()
     if profile is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Profile not found")
     return profile
 
 
-@router.put("/{user_id}", response_model=ProfileRead)
+@router.put("/me", response_model=ProfileRead)
 async def update_profile(
-    user_id: UUID, data: ProfileUpdate, db: AsyncSession = Depends(get_db)
+    data: ProfileUpdate,
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
 ) -> UserProfile:
-    result = await db.execute(select(UserProfile).where(UserProfile.user_id == user_id))
+    result = await db.execute(select(UserProfile).where(UserProfile.user_id == current_user.id))
     profile = result.scalar_one_or_none()
 
     if profile is None:
-        user_result = await db.execute(select(User).where(User.id == user_id))
-        user = user_result.scalar_one_or_none()
-        if user is None:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-        profile = UserProfile(user_id=user_id)
+        profile = UserProfile(user_id=current_user.id)
         db.add(profile)
 
     update_data = data.model_dump(exclude_unset=True)

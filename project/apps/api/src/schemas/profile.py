@@ -12,7 +12,7 @@ class ProfileUpdate(BaseModel):
 
 
 class ProfileRead(BaseModel):
-    user_id: str  # Will be serialized from UUID by FastAPI
+    user_id: str
     timezone: str | None = "UTC"
     daily_goal_minutes: int = 30
     preferred_language: str = "en"
