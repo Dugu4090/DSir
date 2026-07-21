@@ -6,46 +6,62 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.core.dependencies import get_current_active_user
 from src.db.session import get_db
 from src.models.content import Concept
 from src.models.learning import ConceptMastery
+from src.models.user import User
+from src.schemas.common import PaginationParams, PaginatedResponse
 from src.schemas.mastery import ConceptMasteryRead, StrengthsWeaknesses
 from src.services.mastery import MasteryEngine
 
 router = APIRouter()
 
 
-@router.get("/user/{user_id}", response_model=list[ConceptMasteryRead])
+@router.get("/", response_model=PaginatedResponse)
 async def list_mastery(
-    user_id: UUID, db: AsyncSession = Depends(get_db)
-) -> list[ConceptMastery]:
+    pagination: PaginationParams = Depends(),
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+) -> PaginatedResponse:
+    query = select(ConceptMastery).where(ConceptMastery.user_id == current_user.id)
+    total_result = await db.execute(query)
+    total = len(total_result.scalars().all())
+
     result = await db.execute(
-        select(ConceptMastery)
-        .where(ConceptMastery.user_id == user_id)
-        .order_by(ConceptMastery.score.asc())
+        query.order_by(ConceptMastery.score.asc())
+        .offset((pagination.page - 1) * pagination.per_page)
+        .limit(pagination.per_page)
     )
-    return list(result.scalars().all())
+    masteries = result.scalars().all()
+
+    return PaginatedResponse(
+        items=[ConceptMasteryRead.model_validate(m).model_dump() for m in masteries],
+        total=total,
+        page=pagination.page,
+        per_page=pagination.per_page,
+        pages=(total + pagination.per_page - 1) // pagination.per_page,
+    )
 
 
-@router.get("/user/{user_id}/concept/{concept_id}", response_model=ConceptMasteryRead)
+@router.get("/concept/{concept_id}", response_model=ConceptMasteryRead)
 async def get_concept_mastery(
-    user_id: UUID, concept_id: UUID, db: AsyncSession = Depends(get_db)
+    concept_id: UUID,
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
 ) -> ConceptMastery:
     engine = MasteryEngine(db)
-    mastery = await engine.get_mastery(user_id, concept_id)
-    if mastery.score == 0 and mastery.attempts == 0:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="No mastery data for this concept"
-        )
+    mastery = await engine.get_mastery(current_user.id, concept_id)
     return mastery
 
 
-@router.get("/user/{user_id}/strengths-weaknesses", response_model=StrengthsWeaknesses)
+@router.get("/strengths-weaknesses", response_model=StrengthsWeaknesses)
 async def get_strengths_weaknesses(
-    user_id: UUID, db: AsyncSession = Depends(get_db)
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
 ) -> StrengthsWeaknesses:
     engine = MasteryEngine(db)
-    strengths, weaknesses = await engine.get_strengths_and_weaknesses(user_id)
+    strengths, weaknesses = await engine.get_strengths_and_weaknesses(current_user.id)
     return StrengthsWeaknesses(
         strengths=list(strengths),
         weaknesses=list(weaknesses),
@@ -54,11 +70,11 @@ async def get_strengths_weaknesses(
 
 @router.post("/record", response_model=ConceptMasteryRead)
 async def record_attempt(
-    user_id: UUID,
     concept_id: UUID,
     is_correct: bool,
     source: str = "exercise",
     difficulty: float = 1.0,
+    current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db),
 ) -> ConceptMastery:
     result = await db.execute(select(Concept).where(Concept.id == concept_id))
@@ -66,8 +82,21 @@ async def record_attempt(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Concept not found")
 
     engine = MasteryEngine(db)
-    mastery = await engine.record_attempt(user_id, concept_id, is_correct, difficulty, source)
-    # Build response before commit to avoid expired ORM attributes
+    mastery = await engine.record_attempt(
+        current_user.id, concept_id, is_correct, difficulty, source
+    )
     response = ConceptMasteryRead.model_validate(mastery)
     await db.commit()
     return response
+
+
+@router.post("/apply-decay/{concept_id}", response_model=ConceptMasteryRead)
+async def apply_decay(
+    concept_id: UUID,
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+) -> ConceptMastery:
+    engine = MasteryEngine(db)
+    mastery = await engine.apply_decay(current_user.id, concept_id)
+    await db.commit()
+    return mastery

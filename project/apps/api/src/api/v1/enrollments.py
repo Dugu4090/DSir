@@ -6,28 +6,48 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.core.dependencies import get_current_active_user, require_admin
 from src.db.session import get_db
 from src.models.content import Course, Roadmap
 from src.models.learning import Enrollment
 from src.models.user import User
+from src.schemas.common import PaginationParams, PaginatedResponse
 from src.schemas.enrollment import EnrollmentCreate, EnrollmentRead
 
 router = APIRouter()
 
 
-@router.get("/", response_model=list[EnrollmentRead])
-async def list_enrollments(user_id: UUID, db: AsyncSession = Depends(get_db)) -> list[Enrollment]:
+@router.get("/", response_model=PaginatedResponse)
+async def list_enrollments(
+    pagination: PaginationParams = Depends(),
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+) -> PaginatedResponse:
+    query = select(Enrollment).where(Enrollment.user_id == current_user.id)
+    total_result = await db.execute(query)
+    total = len(total_result.scalars().all())
+
     result = await db.execute(
-        select(Enrollment)
-        .where(Enrollment.user_id == user_id)
-        .order_by(Enrollment.started_at.desc())
+        query.order_by(Enrollment.started_at.desc())
+        .offset((pagination.page - 1) * pagination.per_page)
+        .limit(pagination.per_page)
     )
-    return list(result.scalars().all())
+    enrollments = result.scalars().all()
+
+    return PaginatedResponse(
+        items=[EnrollmentRead.model_validate(e).model_dump() for e in enrollments],
+        total=total,
+        page=pagination.page,
+        per_page=pagination.per_page,
+        pages=(total + pagination.per_page - 1) // pagination.per_page,
+    )
 
 
 @router.post("/", response_model=EnrollmentRead, status_code=status.HTTP_201_CREATED)
 async def create_enrollment(
-    user_id: UUID, data: EnrollmentCreate, db: AsyncSession = Depends(get_db)
+    data: EnrollmentCreate,
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
 ) -> Enrollment:
     if data.roadmap_id:
         result = await db.execute(select(Roadmap).where(Roadmap.id == data.roadmap_id))
@@ -41,7 +61,7 @@ async def create_enrollment(
 
     existing = await db.execute(
         select(Enrollment).where(
-            Enrollment.user_id == user_id,
+            Enrollment.user_id == current_user.id,
             Enrollment.roadmap_id == data.roadmap_id,
             Enrollment.course_id == data.course_id,
         )
@@ -52,7 +72,7 @@ async def create_enrollment(
         )
 
     enrollment = Enrollment(
-        user_id=user_id,
+        user_id=current_user.id,
         roadmap_id=data.roadmap_id,
         course_id=data.course_id,
     )
@@ -64,11 +84,13 @@ async def create_enrollment(
 
 @router.delete("/{enrollment_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_enrollment(
-    enrollment_id: UUID, user_id: UUID, db: AsyncSession = Depends(get_db)
+    enrollment_id: UUID,
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
 ) -> None:
     result = await db.execute(
         select(Enrollment).where(
-            Enrollment.id == enrollment_id, Enrollment.user_id == user_id
+            Enrollment.id == enrollment_id, Enrollment.user_id == current_user.id
         )
     )
     enrollment = result.scalar_one_or_none()

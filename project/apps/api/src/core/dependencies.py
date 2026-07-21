@@ -15,7 +15,7 @@ from src.models.user import User, UserRole
 security = HTTPBearer(auto_error=False)
 
 
-async def _get_token_payload(credentials: HTTPAuthorizationCredentials | None) -> dict | None:
+def _get_token_payload(credentials: HTTPAuthorizationCredentials | None) -> dict | None:
     if not credentials:
         return None
     try:
@@ -31,7 +31,7 @@ async def get_current_user(
     if credentials is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
 
-    payload = await _get_token_payload(credentials)
+    payload = _get_token_payload(credentials)
     if payload is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
 
