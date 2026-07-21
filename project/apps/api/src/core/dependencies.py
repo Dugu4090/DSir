@@ -10,14 +10,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.config import settings
 from src.db.session import get_db
-from src.models.user import User
+from src.models.user import User, UserRole
 
 security = HTTPBearer(auto_error=False)
 
 
-def decode_access_token(token: str) -> dict | None:
+async def _get_token_payload(credentials: HTTPAuthorizationCredentials | None) -> dict | None:
+    if not credentials:
+        return None
     try:
-        return jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
+        return jwt.decode(credentials.credentials, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
     except JWTError:
         return None
 
@@ -29,7 +31,7 @@ async def get_current_user(
     if credentials is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
 
-    payload = decode_access_token(credentials.credentials)
+    payload = await _get_token_payload(credentials)
     if payload is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
 
@@ -45,11 +47,24 @@ async def get_current_user(
     return user
 
 
+async def get_current_active_user(
+    current_user: User = Depends(get_current_user),
+) -> User:
+    if not current_user.is_active:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Inactive user")
+    return current_user
+
+
 def require_roles(*roles: str):
-    def checker(user: User = Depends(get_current_user)) -> User:
-        user_roles = {role.role for role in user.roles}
+    async def checker(current_user: User = Depends(get_current_active_user)) -> User:
+        user_roles = {role.role for role in current_user.roles}
         if not any(role in user_roles for role in roles):
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions")
-        return user
+        return current_user
 
     return checker
+
+
+require_admin = require_roles("admin")
+require_instructor = require_roles("admin", "instructor")
+require_content_creator = require_roles("admin", "instructor", "content_creator")
