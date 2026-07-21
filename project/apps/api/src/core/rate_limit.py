@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 import time
 from collections import defaultdict
 from typing import ClassVar
@@ -17,6 +18,9 @@ except ImportError:  # pragma: no cover
     HAS_REDIS = False
 
 
+logger = logging.getLogger(__name__)
+
+
 class _MemoryStore:
     _data: ClassVar[dict[str, list[float]]] = defaultdict(list)
     _lock = asyncio.Lock()
@@ -30,8 +34,6 @@ class _MemoryStore:
                 self._data.pop(key, None)
             else:
                 self._data[key] = current
-            if len(current) >= limit:
-                return len(current)
             current.append(now)
             self._data[key] = current
             return len(current)
@@ -72,13 +74,19 @@ class RateLimiter:
         if not settings.RATE_LIMIT_ENABLED:
             return
         if _redis_client is not None:
-            now = int(time.time())
-            window_key = f"rate_limit:{key}:{now // self.window}"
-            current = await _redis_client.incr(window_key)
-            if current == 1:
-                await _redis_client.expire(window_key, self.window)
-            if current > self.limit:
-                raise RateLimitExceeded()
+            try:
+                now = int(time.time())
+                window_key = f"rate_limit:{key}:{now // self.window}"
+                current = await _redis_client.incr(window_key)
+                if current == 1:
+                    await _redis_client.expire(window_key, self.window)
+                if current > self.limit:
+                    raise RateLimitExceeded()
+            except redis.RedisError:  # pragma: no cover - fallback when Redis is unavailable
+                logger.warning("Redis unavailable for rate limiting; falling back to in-memory store")
+                count = await _memory_store.increment(key, self.window, self.limit)
+                if count > self.limit:
+                    raise RateLimitExceeded() from None
         else:
             count = await _memory_store.increment(key, self.window, self.limit)
             if count > self.limit:
