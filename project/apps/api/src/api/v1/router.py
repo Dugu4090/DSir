@@ -14,6 +14,7 @@ from src.api.v1 import (
     roadmaps,
     submissions,
     users,
+    worker,
 )
 
 api_router = APIRouter()
@@ -31,3 +32,4 @@ api_router.include_router(revision.router, prefix="/revision", tags=["revision"]
 api_router.include_router(projects.router, prefix="/projects", tags=["projects"])
 api_router.include_router(ai.router, prefix="/ai", tags=["ai"])
 api_router.include_router(execution.router, prefix="/execution", tags=["execution"])
+api_router.include_router(worker.router, prefix="/worker", tags=["worker"])
