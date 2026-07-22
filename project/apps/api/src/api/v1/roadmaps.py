@@ -32,9 +32,7 @@ async def list_roadmaps(
     total = len(total_result.scalars().all())
 
     result = await db.execute(
-        query.order_by(Roadmap.title)
-        .offset((pagination.page - 1) * pagination.per_page)
-        .limit(pagination.per_page)
+        query.order_by(Roadmap.title).offset((pagination.page - 1) * pagination.per_page).limit(pagination.per_page)
     )
     roadmaps = result.scalars().all()
 
@@ -50,9 +48,7 @@ async def list_roadmaps(
 @router.get("/{roadmap_id}", response_model=RoadmapDetail)
 async def get_roadmap(roadmap_id: UUID, db: AsyncSession = Depends(get_db)) -> Roadmap:
     result = await db.execute(
-        select(Roadmap)
-        .where(Roadmap.id == roadmap_id)
-        .options(selectinload(Roadmap.roadmap_courses))
+        select(Roadmap).where(Roadmap.id == roadmap_id).options(selectinload(Roadmap.roadmap_courses))
     )
     roadmap = result.scalar_one_or_none()
     if roadmap is None:
@@ -128,9 +124,7 @@ async def link_course_to_roadmap(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Course not found")
 
     existing = await db.execute(
-        select(RoadmapCourse).where(
-            RoadmapCourse.roadmap_id == roadmap_id, RoadmapCourse.course_id == course_id
-        )
+        select(RoadmapCourse).where(RoadmapCourse.roadmap_id == roadmap_id, RoadmapCourse.course_id == course_id)
     )
     if existing.scalar_one_or_none():
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Course already linked")
@@ -156,9 +150,7 @@ async def get_roadmap_courses(
     total_result = await db.execute(query)
     total = len(total_result.scalars().all())
 
-    result = await db.execute(
-        query.offset((pagination.page - 1) * pagination.per_page).limit(pagination.per_page)
-    )
+    result = await db.execute(query.offset((pagination.page - 1) * pagination.per_page).limit(pagination.per_page))
     courses = result.scalars().all()
 
     return PaginatedResponse(

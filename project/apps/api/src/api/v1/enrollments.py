@@ -67,9 +67,7 @@ async def create_enrollment(
         )
     )
     if existing.scalar_one_or_none():
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Already enrolled"
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Already enrolled")
 
     enrollment = Enrollment(
         user_id=current_user.id,
@@ -89,9 +87,7 @@ async def delete_enrollment(
     db: AsyncSession = Depends(get_db),
 ) -> None:
     result = await db.execute(
-        select(Enrollment).where(
-            Enrollment.id == enrollment_id, Enrollment.user_id == current_user.id
-        )
+        select(Enrollment).where(Enrollment.id == enrollment_id, Enrollment.user_id == current_user.id)
     )
     enrollment = result.scalar_one_or_none()
     if enrollment is None:

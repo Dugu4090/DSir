@@ -82,9 +82,7 @@ async def record_attempt(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Concept not found")
 
     engine = MasteryEngine(db)
-    mastery = await engine.record_attempt(
-        current_user.id, concept_id, is_correct, difficulty, source
-    )
+    mastery = await engine.record_attempt(current_user.id, concept_id, is_correct, difficulty, source)
     response = ConceptMasteryRead.model_validate(mastery)
     await db.commit()
     return response

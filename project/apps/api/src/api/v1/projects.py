@@ -90,14 +90,10 @@ async def get_submission(
     current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db),
 ) -> ProjectSubmission:
-    result = await db.execute(
-        select(ProjectSubmission).where(ProjectSubmission.id == submission_id)
-    )
+    result = await db.execute(select(ProjectSubmission).where(ProjectSubmission.id == submission_id))
     submission = result.scalar_one_or_none()
     if submission is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Submission not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Submission not found")
     if submission.user_id != current_user.id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
     return submission

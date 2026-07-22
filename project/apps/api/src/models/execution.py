@@ -20,9 +20,7 @@ class ExecutionHistory(Base):
     )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id: Mapped[uuid.UUID | None] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("users.id"), nullable=True
-    )
+    user_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
     language: Mapped[str] = mapped_column(String(50), nullable=False)
     code: Mapped[str] = mapped_column(Text, nullable=False)
     stdin: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -36,6 +34,4 @@ class ExecutionHistory(Base):
     provider: Mapped[str] = mapped_column(String(50), nullable=False)
     status: Mapped[str] = mapped_column(String(50), nullable=False, default="pending")
     ai_review: Mapped[dict[str, Any] | None] = mapped_column(JSONType, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=lambda: datetime.now(UTC)
-    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC))

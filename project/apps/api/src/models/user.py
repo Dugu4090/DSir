@@ -18,17 +18,13 @@ if TYPE_CHECKING:
 class User(Base):
     __tablename__ = "users"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False, index=True)
     hashed_password: Mapped[str | None] = mapped_column(String(255), nullable=True)
     full_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
     avatar_url: Mapped[str | None] = mapped_column(Text, nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=lambda: datetime.now(UTC)
-    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         default=lambda: datetime.now(UTC),
@@ -37,18 +33,14 @@ class User(Base):
 
     profile: Mapped[UserProfile] = relationship("UserProfile", back_populates="user", uselist=False)
     roles: Mapped[list[UserRole]] = relationship("UserRole", back_populates="user")
-    refresh_tokens: Mapped[list[RefreshToken]] = relationship(
-        "RefreshToken", back_populates="user"
-    )
+    refresh_tokens: Mapped[list[RefreshToken]] = relationship("RefreshToken", back_populates="user")
     enrollments: Mapped[list[Enrollment]] = relationship("Enrollment", back_populates="user")
 
 
 class UserProfile(Base):
     __tablename__ = "user_profiles"
 
-    user_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("users.id"), primary_key=True
-    )
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), primary_key=True)
     timezone: Mapped[str | None] = mapped_column(String(50), default="UTC")
     daily_goal_minutes: Mapped[int] = mapped_column(default=30)
     preferred_language: Mapped[str] = mapped_column(String(10), default="en")
@@ -77,8 +69,6 @@ class RefreshToken(Base):
     token_hash: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     revoked: Mapped[bool] = mapped_column(Boolean, default=False)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=lambda: datetime.now(UTC)
-    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
 
     user: Mapped[User] = relationship("User", back_populates="refresh_tokens")

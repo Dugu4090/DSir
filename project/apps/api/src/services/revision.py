@@ -42,9 +42,7 @@ class RevisionEngine:
             self.db.add(schedule)
         return schedule
 
-    async def schedule_review(
-        self, user_id: UUID, concept_id: UUID, quality: int
-    ) -> RevisionSchedule:
+    async def schedule_review(self, user_id: UUID, concept_id: UUID, quality: int) -> RevisionSchedule:
         schedule = await self.get_schedule(user_id, concept_id)
         quality = max(0, min(5, quality))
 

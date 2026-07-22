@@ -27,8 +27,7 @@ async def chat(
 
     manager = get_ai_manager()
     messages = [
-        Message(role=Role.USER if m.role == "user" else Role.ASSISTANT, content=m.content)
-        for m in data.messages
+        Message(role=Role.USER if m.role == "user" else Role.ASSISTANT, content=m.content) for m in data.messages
     ]
 
     response = await manager.generate(messages, data.temperature, data.max_tokens)
@@ -51,8 +50,7 @@ async def chat_stream(
 
     manager = get_ai_manager()
     messages = [
-        Message(role=Role.USER if m.role == "user" else Role.ASSISTANT, content=m.content)
-        for m in data.messages
+        Message(role=Role.USER if m.role == "user" else Role.ASSISTANT, content=m.content) for m in data.messages
     ]
 
     async def event_generator() -> AsyncGenerator[str, None]:

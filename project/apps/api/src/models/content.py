@@ -21,18 +21,14 @@ class Roadmap(Base):
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     is_published: Mapped[bool] = mapped_column(Boolean, default=False)
     meta: Mapped[dict[str, Any]] = mapped_column(JSONType, default=dict)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=lambda: datetime.now(UTC)
-    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         default=lambda: datetime.now(UTC),
         onupdate=lambda: datetime.now(UTC),
     )
 
-    roadmap_courses: Mapped[list[RoadmapCourse]] = relationship(
-        "RoadmapCourse", back_populates="roadmap"
-    )
+    roadmap_courses: Mapped[list[RoadmapCourse]] = relationship("RoadmapCourse", back_populates="roadmap")
 
 
 class Course(Base):
@@ -45,9 +41,7 @@ class Course(Base):
     technology: Mapped[str] = mapped_column(String(100), nullable=False)
     is_published: Mapped[bool] = mapped_column(Boolean, default=False)
     meta: Mapped[dict[str, Any]] = mapped_column(JSONType, default=dict)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=lambda: datetime.now(UTC)
-    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         default=lambda: datetime.now(UTC),
@@ -55,9 +49,7 @@ class Course(Base):
     )
 
     concepts: Mapped[list[Concept]] = relationship("Concept", back_populates="course")
-    roadmap_courses: Mapped[list[RoadmapCourse]] = relationship(
-        "RoadmapCourse", back_populates="course"
-    )
+    roadmap_courses: Mapped[list[RoadmapCourse]] = relationship("RoadmapCourse", back_populates="course")
 
 
 class RoadmapCourse(Base):
@@ -65,12 +57,8 @@ class RoadmapCourse(Base):
     __table_args__ = (UniqueConstraint("roadmap_id", "course_id"),)
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    roadmap_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("roadmaps.id"), nullable=False
-    )
-    course_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("courses.id"), nullable=False
-    )
+    roadmap_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("roadmaps.id"), nullable=False)
+    course_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("courses.id"), nullable=False)
     position: Mapped[int] = mapped_column(Integer, nullable=False)
 
     roadmap: Mapped[Roadmap] = relationship("Roadmap", back_populates="roadmap_courses")
@@ -82,18 +70,14 @@ class Concept(Base):
     __table_args__ = (UniqueConstraint("course_id", "slug"),)
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    course_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("courses.id"), nullable=False
-    )
+    course_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("courses.id"), nullable=False)
     slug: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     difficulty: Mapped[str | None] = mapped_column(String(50), nullable=True)
     prerequisites: Mapped[list[uuid.UUID]] = mapped_column(JSONType, default=list)
     meta: Mapped[dict[str, Any]] = mapped_column(JSONType, default=dict)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=lambda: datetime.now(UTC)
-    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
 
     course: Mapped[Course] = relationship("Course", back_populates="concepts")
     lessons: Mapped[list[Lesson]] = relationship("Lesson", back_populates="concept")
@@ -104,17 +88,13 @@ class Lesson(Base):
     __table_args__ = (UniqueConstraint("concept_id", "slug"),)
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    concept_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("concepts.id"), nullable=False
-    )
+    concept_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("concepts.id"), nullable=False)
     slug: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     content: Mapped[dict[str, Any]] = mapped_column(JSONType, nullable=False)
     lesson_type: Mapped[str] = mapped_column(String(50), default="reading")
     position: Mapped[int] = mapped_column(Integer, nullable=False)
     meta: Mapped[dict[str, Any]] = mapped_column(JSONType, default=dict)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=lambda: datetime.now(UTC)
-    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
 
     concept: Mapped[Concept] = relationship("Concept", back_populates="lessons")

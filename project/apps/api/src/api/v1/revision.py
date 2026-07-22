@@ -166,14 +166,10 @@ async def complete_revision_session(
     current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db),
 ) -> RevisionSession:
-    result = await db.execute(
-        select(RevisionSession).where(RevisionSession.id == session_id)
-    )
+    result = await db.execute(select(RevisionSession).where(RevisionSession.id == session_id))
     session = result.scalar_one_or_none()
     if session is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Session not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Session not found")
     from datetime import UTC, datetime
 
     session.completed_at = datetime.now(UTC)

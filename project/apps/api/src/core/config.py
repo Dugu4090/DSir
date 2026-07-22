@@ -1,7 +1,12 @@
+from __future__ import annotations
+
 from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
+    # Environment
+    ENVIRONMENT: str = "development"
+
     # Database / Cache
     DATABASE_URL: str = "postgresql+asyncpg://dsir:dsir@localhost:5432/dsir"
     REDIS_URL: str = "redis://localhost:6379/0"
@@ -44,4 +49,17 @@ class Settings(BaseSettings):
         env_file = ".env"
 
 
+def _validate_secret_key(secret: str, environment: str) -> None:
+    if environment.lower() == "production":
+        insecure = {
+            "dev-secret-change-me",
+            "secret",
+            "changeme",
+            "password",
+        }
+        if not secret or secret.strip().lower() in insecure:
+            raise ValueError("SECRET_KEY must be set to a strong random value in production")
+
+
 settings = Settings()
+_validate_secret_key(settings.SECRET_KEY, settings.ENVIRONMENT)

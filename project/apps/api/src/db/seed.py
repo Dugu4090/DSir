@@ -55,10 +55,12 @@ async def seed_courses(db: AsyncSession) -> None:
     db.add(roadmap)
     await db.flush()
 
-    db.add_all([
-        RoadmapCourse(roadmap_id=roadmap.id, course_id=python.id, position=1),
-        RoadmapCourse(roadmap_id=roadmap.id, course_id=js.id, position=2),
-    ])
+    db.add_all(
+        [
+            RoadmapCourse(roadmap_id=roadmap.id, course_id=python.id, position=1),
+            RoadmapCourse(roadmap_id=roadmap.id, course_id=js.id, position=2),
+        ]
+    )
 
 
 async def main() -> None:

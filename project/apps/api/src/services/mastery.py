@@ -144,12 +144,8 @@ class MasteryEngine:
         await self.db.flush()
         return mastery
 
-    async def get_strengths_and_weaknesses(
-        self, user_id: UUID
-    ) -> tuple[list[ConceptMastery], list[ConceptMastery]]:
-        result = await self.db.execute(
-            select(ConceptMastery).where(ConceptMastery.user_id == user_id)
-        )
+    async def get_strengths_and_weaknesses(self, user_id: UUID) -> tuple[list[ConceptMastery], list[ConceptMastery]]:
+        result = await self.db.execute(select(ConceptMastery).where(ConceptMastery.user_id == user_id))
         masteries = list(result.scalars().all())
         strengths = [m for m in masteries if m.score >= 80 and m.confidence >= 70]
         weaknesses = [m for m in masteries if m.score < 50 or m.confidence < 40]

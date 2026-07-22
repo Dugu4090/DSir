@@ -1,16 +1,18 @@
 import logging
 from collections.abc import AsyncGenerator, Awaitable, Callable
 from contextlib import asynccontextmanager
+from typing import Any
 
+import redis.asyncio as redis
 from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
 from src.api.v1.router import api_router
 from src.core.config import settings
-from src.db.base import Base
 from src.db.session import async_engine
 from src.models import *  # noqa: F401,F403 - registers models with Base.metadata
 
@@ -22,9 +24,8 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         level=getattr(logging, settings.LOG_LEVEL.upper(), logging.INFO),
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
-    # Startup
-    async with async_engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+    # Startup: do NOT run Base.metadata.create_all here.
+    # Schema management is handled by Alembic migrations.
     yield
     # Shutdown
     await async_engine.dispose()
@@ -75,9 +76,7 @@ async def http_exception_handler(request: Request, exc: HTTPException) -> JSONRe
 
 
 @app.exception_handler(RequestValidationError)
-async def validation_exception_handler(
-    request: Request, exc: RequestValidationError
-) -> JSONResponse:
+async def validation_exception_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
     return JSONResponse(status_code=422, content={"detail": exc.errors()})
 
 
@@ -99,3 +98,33 @@ app.include_router(api_router, prefix="/api/v1")
 @app.get("/health")
 async def health_check() -> dict[str, str]:
     return {"status": "ok"}
+
+
+@app.get("/ready")
+async def readiness_check() -> JSONResponse:
+    status: dict[str, Any] = {"status": "ok", "checks": {}}
+    status_code = 200
+
+    try:
+        async with async_engine.connect() as conn:
+            await conn.execute(text("SELECT 1"))
+        status["checks"]["database"] = "ok"
+    except Exception as e:
+        logger.exception("Database readiness check failed")
+        status["checks"]["database"] = f"unavailable: {e!s}"
+        status_code = 503
+
+    try:
+        client = redis.from_url(settings.REDIS_URL)  # type: ignore[no-untyped-call]
+        await client.ping()
+        await client.close()
+        status["checks"]["redis"] = "ok"
+    except Exception as e:
+        logger.exception("Redis readiness check failed")
+        status["checks"]["redis"] = f"unavailable: {e!s}"
+        status_code = 503
+
+    if status_code != 200:
+        status["status"] = "degraded"
+
+    return JSONResponse(status_code=status_code, content=status)

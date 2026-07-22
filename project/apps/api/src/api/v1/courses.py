@@ -33,9 +33,7 @@ async def list_courses(
     total = len(total_result.scalars().all())
 
     result = await db.execute(
-        query.order_by(Course.title)
-        .offset((pagination.page - 1) * pagination.per_page)
-        .limit(pagination.per_page)
+        query.order_by(Course.title).offset((pagination.page - 1) * pagination.per_page).limit(pagination.per_page)
     )
     courses = result.scalars().all()
 
@@ -101,14 +99,8 @@ async def list_course_concepts(
 
 
 @router.get("/{course_id}/concepts/{concept_slug}", response_model=ConceptRead)
-async def get_concept(
-    course_id: UUID, concept_slug: str, db: AsyncSession = Depends(get_db)
-) -> Concept:
-    result = await db.execute(
-        select(Concept).where(
-            Concept.course_id == course_id, Concept.slug == concept_slug
-        )
-    )
+async def get_concept(course_id: UUID, concept_slug: str, db: AsyncSession = Depends(get_db)) -> Concept:
+    result = await db.execute(select(Concept).where(Concept.course_id == course_id, Concept.slug == concept_slug))
     concept = result.scalar_one_or_none()
     if concept is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Concept not found")

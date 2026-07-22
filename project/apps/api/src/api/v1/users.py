@@ -77,9 +77,7 @@ async def add_role(
     if user is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
-    existing = await db.execute(
-        select(UserRole).where(UserRole.user_id == user_id, UserRole.role == role)
-    )
+    existing = await db.execute(select(UserRole).where(UserRole.user_id == user_id, UserRole.role == role))
     if existing.scalar_one_or_none():
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Role already assigned")
 

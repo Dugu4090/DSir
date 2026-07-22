@@ -66,9 +66,7 @@ class KnowledgeGraph:
         )
         return [c.id for c in result.scalars().all()]
 
-    async def is_prereq_chain_satisfied(
-        self, concept_id: UUID, mastered_concepts: set[UUID]
-    ) -> bool:
+    async def is_prereq_chain_satisfied(self, concept_id: UUID, mastered_concepts: set[UUID]) -> bool:
         prereqs = await self.get_prerequisites(concept_id)
         return set(prereqs).issubset(mastered_concepts)
 
@@ -95,9 +93,7 @@ class KnowledgeGraph:
             raise ValueError("Cycle detected in concept graph")
         return ordered
 
-    async def next_unlocked_concepts(
-        self, course_id: UUID, mastered_concepts: set[UUID]
-    ) -> list[UUID]:
+    async def next_unlocked_concepts(self, course_id: UUID, mastered_concepts: set[UUID]) -> list[UUID]:
         graph = await self.build_concept_graph(course_id)
         unlocked = []
         for cid, node in graph.items():
@@ -109,9 +105,7 @@ class KnowledgeGraph:
 
     async def build_roadmap_graph(self, roadmap_id: UUID) -> RoadmapGraph:
         result = await self.db.execute(
-            select(RoadmapCourse)
-            .where(RoadmapCourse.roadmap_id == roadmap_id)
-            .order_by(RoadmapCourse.position)
+            select(RoadmapCourse).where(RoadmapCourse.roadmap_id == roadmap_id).order_by(RoadmapCourse.position)
         )
         links = result.scalars().all()
         return RoadmapGraph(
@@ -130,9 +124,7 @@ class KnowledgeGraph:
             ordered = await self.topological_sort(course_id)
             for concept_id in ordered:
                 if concept_id not in mastered_concepts:
-                    prereqs_satisfied = await self.is_prereq_chain_satisfied(
-                        concept_id, mastered_concepts
-                    )
+                    prereqs_satisfied = await self.is_prereq_chain_satisfied(concept_id, mastered_concepts)
                     if prereqs_satisfied:
                         path.append(concept_id)
         return path

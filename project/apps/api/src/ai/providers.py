@@ -115,9 +115,7 @@ class AnthropicProvider(AIProvider):
         temperature: float = 0.7,
         max_tokens: int | None = None,
     ) -> AIResponse:
-        payload = [
-            {"role": m.role.value, "content": m.content} for m in messages if m.role.value != "system"
-        ]
+        payload = [{"role": m.role.value, "content": m.content} for m in messages if m.role.value != "system"]
         system_message = next((m.content for m in messages if m.role.value == "system"), None)
         response = await self.client.messages.create(
             model=self.model,
@@ -140,9 +138,7 @@ class AnthropicProvider(AIProvider):
         temperature: float = 0.7,
         max_tokens: int | None = None,
     ) -> AsyncGenerator[str, None]:
-        payload = [
-            {"role": m.role.value, "content": m.content} for m in messages if m.role.value != "system"
-        ]
+        payload = [{"role": m.role.value, "content": m.content} for m in messages if m.role.value != "system"]
         system_message = next((m.content for m in messages if m.role.value == "system"), None)
         async with self.client.messages.stream(
             model=self.model,
@@ -164,8 +160,7 @@ class GeminiProvider(AIProvider):
             import google.generativeai as genai
         except ImportError as exc:
             raise ImportError(
-                "Google Generative AI SDK not installed. "
-                "Install with `pip install google-generativeai`"
+                "Google Generative AI SDK not installed. Install with `pip install google-generativeai`"
             ) from exc
 
         genai.configure(api_key=api_key or os.getenv("GEMINI_API_KEY"))
@@ -242,20 +237,21 @@ class OllamaProvider(AIProvider):
             "messages": [{"role": m.role.value, "content": m.content} for m in messages],
             "stream": True,
         }
-        async with httpx.AsyncClient() as client, client.stream(
-            "POST", f"{self.base_url}/api/chat", json=payload
-        ) as response:
+        async with (
+            httpx.AsyncClient() as client,
+            client.stream("POST", f"{self.base_url}/api/chat", json=payload) as response,
+        ):
             async for line in response.aiter_lines():
-                    if not line:
-                        continue
-                    try:
-                        data = json.loads(line)
-                        message = data.get("message", {})
-                        content = message.get("content", "")
-                        if content:
-                            yield content
-                    except json.JSONDecodeError:
-                        continue
+                if not line:
+                    continue
+                try:
+                    data = json.loads(line)
+                    message = data.get("message", {})
+                    content = message.get("content", "")
+                    if content:
+                        yield content
+                except json.JSONDecodeError:
+                    continue
 
     async def embed(self, text: str, dimensions: int = 1536) -> list[float]:
         import httpx

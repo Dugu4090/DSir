@@ -50,7 +50,7 @@ REVISION_PROBLEM_PROMPT = PromptTemplate(
     name="revision-problem",
     template=(
         "You are an adaptive revision engine. Create a fresh practice problem for the concept "
-        "\"{concept}\".\n\n"
+        '"{concept}".\n\n'
         "Difficulty target: {difficulty}\n"
         "Learner recent mistakes: {mistakes}\n\n"
         "Generate a concise problem statement and example input/output. "
