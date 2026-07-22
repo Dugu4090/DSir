@@ -4,7 +4,7 @@ import uuid
 from datetime import datetime
 from typing import Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class SubmissionCreate(BaseModel):
@@ -23,9 +23,7 @@ class SubmissionRead(BaseModel):
     score: int | None = None
     submitted_at: datetime
     evaluated_at: datetime | None = None
-
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class SubmissionDetail(SubmissionRead):

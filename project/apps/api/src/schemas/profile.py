@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class ProfileUpdate(BaseModel):
@@ -20,6 +20,4 @@ class ProfileRead(BaseModel):
     preferred_language: str = "en"
     onboarding_completed: bool = False
     preferences: dict[str, Any] = {}
-
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

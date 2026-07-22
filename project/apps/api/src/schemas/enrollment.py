@@ -3,7 +3,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class EnrollmentCreate(BaseModel):
@@ -19,6 +19,4 @@ class EnrollmentRead(BaseModel):
     started_at: datetime
     completed_at: datetime | None = None
     status: str
-
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

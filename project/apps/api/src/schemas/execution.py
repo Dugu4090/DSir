@@ -3,7 +3,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class ExecutionRequest(BaseModel):
@@ -42,9 +42,7 @@ class ExecutionHistoryRead(BaseModel):
     status: str
     ai_review: CodeReviewResult | None = None
     created_at: datetime
-
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ExecutionReviewResponse(BaseModel):

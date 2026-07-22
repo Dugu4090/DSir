@@ -4,7 +4,7 @@ import uuid
 from datetime import datetime
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class RevisionScheduleRead(BaseModel):
@@ -14,9 +14,7 @@ class RevisionScheduleRead(BaseModel):
     repetitions: int
     due_at: datetime
     last_reviewed_at: datetime | None = None
-
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class RevisionSessionStart(BaseModel):
@@ -30,9 +28,7 @@ class RevisionSessionRead(BaseModel):
     completed_at: datetime | None = None
     concepts: list[uuid.UUID]
     results: dict[str, Any]
-
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ReviewRequest(BaseModel):
@@ -52,9 +48,7 @@ class ActiveRecallProblemRead(BaseModel):
     concept_id: uuid.UUID
     problem: dict[str, Any]
     due_at: datetime | None = None
-
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ActiveRecallSessionRead(BaseModel):

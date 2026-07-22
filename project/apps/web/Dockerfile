@@ -1,4 +1,4 @@
-FROM node:20-alpine AS base
+FROM node:22-alpine AS base
 
 FROM base AS deps
 RUN apk add --no-cache libc6-compat
@@ -13,6 +13,9 @@ ARG API_URL
 ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 ENV API_URL=${API_URL}
 COPY --from=deps /app/node_modules ./node_modules
+# Ensure public directory exists so the runner COPY does not fail
+# when the project has no public/ folder.
+RUN mkdir -p public
 COPY . .
 RUN npm run build
 

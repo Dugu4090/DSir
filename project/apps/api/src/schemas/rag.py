@@ -4,7 +4,7 @@ import uuid
 from datetime import datetime
 from typing import Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class KnowledgeChunkCreate(BaseModel):
@@ -23,9 +23,7 @@ class KnowledgeChunkRead(BaseModel):
     content: str
     meta: dict[str, Any]
     created_at: datetime
-
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class SearchRequest(BaseModel):
