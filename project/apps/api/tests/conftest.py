@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 import os
+from collections.abc import AsyncGenerator
+from typing import Any
 
 import pytest_asyncio
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from fastapi.testclient import TestClient
+from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine, create_async_engine
 from sqlalchemy.pool import NullPool
 
 from src.core.config import settings
@@ -19,13 +22,13 @@ TEST_DATABASE_URL = f"sqlite+aiosqlite:///{TEST_DB_PATH}"
 
 
 @pytest_asyncio.fixture(scope="session")
-def test_engine():
+def test_engine() -> AsyncEngine:
     engine = create_async_engine(TEST_DATABASE_URL, poolclass=NullPool)
     return engine
 
 
 @pytest_asyncio.fixture(scope="session", autouse=True)
-async def create_test_tables(test_engine):
+async def create_test_tables(test_engine: AsyncEngine) -> AsyncGenerator[None, None]:
     async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     yield
@@ -34,7 +37,7 @@ async def create_test_tables(test_engine):
 
 
 @pytest_asyncio.fixture
-async def db_session(test_engine):
+async def db_session(test_engine: AsyncEngine) -> AsyncGenerator[AsyncSession, None]:
     conn = await test_engine.connect()
     session = AsyncSession(bind=conn, expire_on_commit=False)
 
@@ -49,10 +52,8 @@ async def db_session(test_engine):
 
 
 @pytest_asyncio.fixture
-async def client(db_session):
-    from fastapi.testclient import TestClient
-
-    async def override_get_db():
+async def client(db_session: AsyncSession) -> AsyncGenerator[TestClient, None]:
+    async def override_get_db() -> AsyncGenerator[AsyncSession, None]:
         yield db_session
 
     app.dependency_overrides[get_db] = override_get_db
@@ -61,13 +62,11 @@ async def client(db_session):
 
 
 @pytest_asyncio.fixture
-async def auth_client(db_session):
-    from fastapi.testclient import TestClient
-
+async def auth_client(db_session: AsyncSession) -> AsyncGenerator[TestClient, None]:
     from src.core.security import get_password_hash
     from src.models.user import User, UserRole
 
-    async def override_get_db():
+    async def override_get_db() -> AsyncGenerator[AsyncSession, None]:
         yield db_session
 
     app.dependency_overrides[get_db] = override_get_db

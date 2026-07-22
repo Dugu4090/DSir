@@ -5,18 +5,19 @@ Revises: 0001_initial
 Create Date: 2024-07-21 00:00:00.000000
 
 """
-from typing import Sequence, Union
+from collections.abc import Sequence
 
 import sqlalchemy as sa
-from alembic import op
-from sqlalchemy.dialects import postgresql
 from pgvector.sqlalchemy import Vector
+from sqlalchemy.dialects import postgresql
+
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "0002_add_execution_knowledge_audit_and_rename_meta"
-down_revision: Union[str, None] = "0001_initial"
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | None = "0001_initial"
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:

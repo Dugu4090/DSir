@@ -39,11 +39,14 @@ export default function WorkspacePage() {
     enabled: !!currentLessonId,
   });
 
-  const lessonContent =
-    lessonDetail?.content && typeof lessonDetail.content === "object"
-      ? (lessonDetail.content as Record<string, unknown>).body ??
-        JSON.stringify(lessonDetail.content)
-      : "No lesson content available.";
+  const lessonContent: string = (() => {
+    if (!lessonDetail?.content) return "No lesson content available.";
+    if (typeof lessonDetail.content === "string") return lessonDetail.content;
+    const body = (lessonDetail.content as Record<string, unknown>).body;
+    if (typeof body === "string") return body;
+    if (body !== undefined && body !== null) return String(body);
+    return JSON.stringify(lessonDetail.content) ?? "No lesson content available.";
+  })();
   const currentLesson = lessonList[currentLessonIndex];
 
   const handleRun = async () => {

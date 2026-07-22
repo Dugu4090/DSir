@@ -213,16 +213,18 @@ export async function fetchAllConceptsMap(): Promise<
   try {
     const coursesRes = await fetchCourses();
     const map: Record<string, { title: string; slug: string }> = {};
-    for (const course of coursesRes.items) {
-      try {
-        const conceptsRes = await fetchCourseConcepts(course.id);
-        for (const concept of conceptsRes.items) {
-          map[concept.id] = { title: concept.title, slug: concept.slug };
+    await Promise.allSettled(
+      coursesRes.items.map(async (course) => {
+        try {
+          const conceptsRes = await fetchCourseConcepts(course.id);
+          for (const concept of conceptsRes.items) {
+            map[concept.id] = { title: concept.title, slug: concept.slug };
+          }
+        } catch {
+          // Skip failed course concept fetches
         }
-      } catch {
-        // Skip failed course concept fetches
-      }
-    }
+      })
+    );
     return map;
   } catch {
     return {};
