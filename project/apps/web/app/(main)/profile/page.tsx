@@ -33,40 +33,42 @@ export default function ProfilePage() {
       ? Math.round(mastery.items.reduce((acc, m) => acc + m.score, 0) / mastery.items.length)
       : 0;
 
-  return (
-    <div className="space-y-6">
-      <div>
+  if (masteryError || statsError) {
+    return (
+      <div className="space-y-6">
         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Profile</h1>
         <p className="text-slate-600 dark:text-slate-400">Manage your account and view progress.</p>
-      </div>
-
-      {(masteryError || statsError) && (
         <ErrorMessage>
           Failed to load profile data.{" "}
           <Button onClick={() => { refetchMastery(); refetchStats(); }} variant="secondary" size="sm" className="ml-2">
             Retry
           </Button>
         </ErrorMessage>
-      )}
+      </div>
+    );
+  }
 
-      {(masteryError || statsError) && (
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-900">
-          <p className="text-slate-600 dark:text-slate-400">
-            Some profile information is unavailable. Try refreshing the page.
-          </p>
+  if (masteryLoading || statsLoading) {
+    return (
+      <div className="space-y-6">
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Profile</h1>
+        <p className="text-slate-600 dark:text-slate-400">Manage your account and view progress.</p>
+        <div className="h-40 animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800" />
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="h-28 animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800" />
+          ))}
         </div>
-      )}
+      </div>
+    );
+  }
 
-      {(masteryLoading || statsLoading) && (
-        <div className="space-y-4">
-          <div className="h-40 animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800" />
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="h-28 animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800" />
-            ))}
-          </div>
-        </div>
-      )}
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Profile</h1>
+        <p className="text-slate-600 dark:text-slate-400">Manage your account and view progress.</p>
+      </div>
 
       <div className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-900">
         <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Account</h2>

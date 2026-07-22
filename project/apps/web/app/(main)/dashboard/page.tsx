@@ -11,7 +11,6 @@ import {
   fetchStrengthsWeaknesses,
 } from "@/lib/api";
 import { ErrorMessage } from "@/components/ui/error-message";
-import { EmptyState } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
 
 export default function DashboardPage() {
