@@ -7,7 +7,7 @@ from src.services.revision import RevisionEngine
 
 
 @pytest.fixture
-def revision_engine(db_session: AsyncSession) -> None:
+def revision_engine(db_session: AsyncSession) -> RevisionEngine:
     return RevisionEngine(db_session)
 
 

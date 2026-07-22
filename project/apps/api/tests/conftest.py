@@ -22,7 +22,7 @@ TEST_DATABASE_URL = f"sqlite+aiosqlite:///{TEST_DB_PATH}"
 
 
 @pytest_asyncio.fixture(scope="session")
-def test_engine() -> AsyncEngine:
+def test_engine() -> Any:
     engine = create_async_engine(TEST_DATABASE_URL, poolclass=NullPool)
     return engine
 

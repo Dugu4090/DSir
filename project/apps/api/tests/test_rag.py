@@ -6,7 +6,7 @@ from src.services.rag import RAGService
 
 
 @pytest.fixture
-def rag_service(db_session: AsyncSession) -> None:
+def rag_service(db_session: AsyncSession) -> RAGService:
     from src.ai.manager import get_ai_manager
 
     return RAGService(db_session, get_ai_manager())

@@ -7,7 +7,7 @@ from src.services.mastery import MasteryEngine
 
 
 @pytest.fixture
-def mastery_engine(db_session: AsyncSession) -> None:
+def mastery_engine(db_session: AsyncSession) -> MasteryEngine:
     return MasteryEngine(db_session)
 
 

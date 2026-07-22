@@ -6,7 +6,7 @@ from src.services.knowledge_graph import KnowledgeGraph
 
 
 @pytest.fixture
-def knowledge_graph(db_session: AsyncSession) -> None:
+def knowledge_graph(db_session: AsyncSession) -> KnowledgeGraph:
     return KnowledgeGraph(db_session)
 
 
