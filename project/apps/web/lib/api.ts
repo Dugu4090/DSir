@@ -13,7 +13,7 @@ export interface Course {
   id: string;
   slug: string;
   title: string;
-  description: string;
+  description: string | null;
   technology: string;
   is_published: boolean;
   created_at: string;
@@ -23,7 +23,7 @@ export interface Roadmap {
   id: string;
   slug: string;
   title: string;
-  description: string;
+  description: string | null;
   is_published: boolean;
   created_at: string;
 }
@@ -32,23 +32,34 @@ export interface Concept {
   id: string;
   slug: string;
   title: string;
-  description: string;
-  course_id: string;
+  description: string | null;
+  difficulty: string | null;
+  created_at: string;
 }
 
 export interface Lesson {
   id: string;
-  title: string;
-  content: string;
-  position: number;
   concept_id: string;
+  slug: string;
+  title: string;
+  lesson_type: string;
+  position: number;
+  created_at: string;
+}
+
+export interface LessonDetail extends Lesson {
+  content: Record<string, unknown>;
+  meta: Record<string, unknown>;
 }
 
 export interface Enrollment {
   id: string;
+  user_id: string;
   roadmap_id: string | null;
   course_id: string | null;
   started_at: string;
+  completed_at: string | null;
+  status: string;
 }
 
 export interface Mastery {
@@ -57,20 +68,27 @@ export interface Mastery {
   confidence: number;
   attempts: number;
   correct_streak: number;
+  last_reviewed_at: string | null;
+  next_review_at: string | null;
+  updated_at: string;
 }
 
 export interface RevisionSchedule {
   concept_id: string;
-  due_at: string;
   interval_days: number;
+  ease_factor: number;
+  repetitions: number;
+  due_at: string;
+  last_reviewed_at: string | null;
 }
 
 export interface Project {
   id: string;
-  title: string;
-  slug: string;
-  description: string;
   course_id: string;
+  slug: string;
+  title: string;
+  description: string | null;
+  created_at: string;
 }
 
 export interface ExecutionResult {
@@ -78,6 +96,7 @@ export interface ExecutionResult {
   stderr: string;
   exit_code: number;
   execution_time_ms: number;
+  is_timeout: boolean;
 }
 
 // Auth
@@ -139,6 +158,11 @@ export async function fetchLesson(lessonId: string) {
   return res.data;
 }
 
+export async function fetchLessonDetail(lessonId: string) {
+  const res = await apiClient.get<LessonDetail>(`/lessons/${lessonId}`);
+  return res.data;
+}
+
 // Mastery
 export async function fetchMastery() {
   const res = await apiClient.get<PaginatedResponse<Mastery>>("/mastery/");
@@ -180,6 +204,29 @@ export async function createProjectSubmission(data: {
 }) {
   const res = await apiClient.post("/projects/submissions", data);
   return res.data;
+}
+
+// Helpers
+export async function fetchAllConceptsMap(): Promise<
+  Record<string, { title: string; slug: string }>
+> {
+  try {
+    const coursesRes = await fetchCourses();
+    const map: Record<string, { title: string; slug: string }> = {};
+    for (const course of coursesRes.items) {
+      try {
+        const conceptsRes = await fetchCourseConcepts(course.id);
+        for (const concept of conceptsRes.items) {
+          map[concept.id] = { title: concept.title, slug: concept.slug };
+        }
+      } catch {
+        // Skip failed course concept fetches
+      }
+    }
+    return map;
+  } catch {
+    return {};
+  }
 }
 
 // Execution

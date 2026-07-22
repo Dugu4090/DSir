@@ -1,5 +1,4 @@
 import {
-  BookOpen,
   FolderCode,
   LayoutDashboard,
   Library,

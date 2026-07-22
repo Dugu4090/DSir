@@ -4,7 +4,7 @@ import { useState } from "react";
 import dynamic from "next/dynamic";
 import { useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { fetchConceptLessons, runCode, reviewCode } from "@/lib/api";
+import { fetchConceptLessons, fetchLessonDetail, runCode, reviewCode } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { ErrorMessage } from "@/components/ui/error-message";
 import { useAIChat } from "@/hooks/use-ai-chat";
@@ -16,6 +16,7 @@ export default function WorkspacePage() {
   const [code, setCode] = useState("# Write your code here\nprint('Hello, DSir!')");
   const [output, setOutput] = useState<string>("");
   const [isRunning, setIsRunning] = useState(false);
+  const [currentLessonIndex, setCurrentLessonIndex] = useState(0);
   const { messages, setMessages, isChatting, sendMessage } = useAIChat();
   const [chatInput, setChatInput] = useState("");
 
@@ -29,7 +30,21 @@ export default function WorkspacePage() {
     queryFn: () => fetchConceptLessons(conceptId),
   });
 
-  const lesson = lessons?.items[0];
+  const lessonList = lessons?.items ?? [];
+  const currentLessonId = lessonList[currentLessonIndex]?.id;
+
+  const { data: lessonDetail } = useQuery({
+    queryKey: ["lesson-detail", currentLessonId],
+    queryFn: () => fetchLessonDetail(currentLessonId!),
+    enabled: !!currentLessonId,
+  });
+
+  const lessonContent =
+    lessonDetail?.content && typeof lessonDetail.content === "object"
+      ? (lessonDetail.content as Record<string, unknown>).body ??
+        JSON.stringify(lessonDetail.content)
+      : "No lesson content available.";
+  const currentLesson = lessonList[currentLessonIndex];
 
   const handleRun = async () => {
     setIsRunning(true);
@@ -85,9 +100,34 @@ export default function WorkspacePage() {
       {/* Lesson Panel */}
       <div className="flex w-full flex-col gap-4 lg:w-1/4">
         <div className="flex-1 overflow-auto rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
-          <h2 className="text-lg font-bold text-slate-900 dark:text-white">{lesson?.title ?? "Lesson"}</h2>
+          {/* Lesson navigation */}
+          {lessonList.length > 1 && (
+            <div className="mb-3 flex items-center gap-2 border-b border-slate-200 pb-3 dark:border-slate-700">
+              {lessonList.map((l, i) => (
+                <button
+                  key={l.id}
+                  onClick={() => setCurrentLessonIndex(i)}
+                  className={`rounded px-2 py-1 text-xs font-medium transition ${
+                    i === currentLessonIndex
+                      ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
+                      : "text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
+                  }`}
+                >
+                  {i + 1}
+                </button>
+              ))}
+            </div>
+          )}
+          <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+            {currentLesson?.title ?? "Lesson"}
+          </h2>
+          {currentLesson && (
+            <span className="mt-1 inline-block rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
+              {currentLesson.lesson_type}
+            </span>
+          )}
           <div className="prose prose-sm mt-4 max-w-none dark:prose-invert">
-            {lesson?.content ?? "No lesson content available."}
+            {lessonContent}
           </div>
         </div>
       </div>

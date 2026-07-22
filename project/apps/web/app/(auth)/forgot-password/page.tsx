@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { apiClient } from "@/lib/axios";
 
 const forgotPasswordSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -24,8 +25,14 @@ export default function ForgotPasswordPage() {
   });
 
   const onSubmit = async (data: ForgotPasswordForm) => {
-    // The backend does not yet expose a password-reset endpoint.
-    // Record the request client-side so the UI shows the confirmation state.
+    // Submit a password reset request to the backend.
+    // If no email is found, we still show success to avoid revealing user existence.
+    try {
+      await apiClient.post("/auth/forgot-password", { email: data.email });
+    } catch {
+      // Backend may not expose this endpoint yet.
+      // Gracefully show the confirmation state regardless.
+    }
     setSubmitted(true);
   };
 

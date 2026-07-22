@@ -1,21 +1,29 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { fetchDueRevisions, submitReview } from "@/lib/api";
+import { fetchDueRevisions, fetchAllConceptsMap, submitReview } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardTitle } from "@/components/ui/card";
 
 export default function ActiveRecallPage() {
   const [index, setIndex] = useState(0);
   const [showAnswer, setShowAnswer] = useState(false);
+  const [conceptMap, setConceptMap] = useState<Record<string, { title: string; slug: string }>>({});
 
   const { data: due, isLoading } = useQuery({
     queryKey: ["revision-due"],
     queryFn: fetchDueRevisions,
   });
 
+  useEffect(() => {
+    fetchAllConceptsMap().then(setConceptMap).catch(() => {});
+  }, []);
+
   const current = due?.[index];
+  const conceptName = current
+    ? conceptMap[current.concept_id]?.title ?? current.concept_id.slice(0, 8) + "..."
+    : "";
 
   const reviewMutation = useMutation({
     mutationFn: ({ conceptId, quality }: { conceptId: string; quality: number }) =>
@@ -51,7 +59,7 @@ export default function ActiveRecallPage() {
             {index + 1} / {due.length}
           </span>
         </div>
-        <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">Concept: {current?.concept_id}</p>
+        <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">Concept: {conceptName}</p>
 
         <div className="mt-6">
           <p className="text-lg font-medium text-slate-900 dark:text-white">
