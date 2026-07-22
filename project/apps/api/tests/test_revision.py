@@ -7,12 +7,12 @@ from src.services.revision import RevisionEngine
 
 
 @pytest.fixture
-def revision_engine(db_session: AsyncSession):
+def revision_engine(db_session: AsyncSession) -> None:
     return RevisionEngine(db_session)
 
 
 @pytest.mark.asyncio
-async def test_schedule_review(revision_engine: RevisionEngine, db_session: AsyncSession):
+async def test_schedule_review(revision_engine: RevisionEngine, db_session: AsyncSession) -> None:
     user = User(email="learner@example.com", hashed_password="secret")
     course = Course(slug="python", title="Python", technology="python")
     db_session.add_all([user, course])

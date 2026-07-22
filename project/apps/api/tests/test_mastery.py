@@ -7,12 +7,12 @@ from src.services.mastery import MasteryEngine
 
 
 @pytest.fixture
-def mastery_engine(db_session: AsyncSession):
+def mastery_engine(db_session: AsyncSession) -> None:
     return MasteryEngine(db_session)
 
 
 @pytest.mark.asyncio
-async def test_record_correct_attempt(mastery_engine: MasteryEngine, db_session: AsyncSession):
+async def test_record_correct_attempt(mastery_engine: MasteryEngine, db_session: AsyncSession) -> None:
     user = User(email="learner@example.com", hashed_password="secret")
     course = Course(slug="python", title="Python", technology="python")
     db_session.add_all([user, course])

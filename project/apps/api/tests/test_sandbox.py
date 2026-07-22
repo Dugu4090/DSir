@@ -5,7 +5,7 @@ from src.sandbox.providers import MockSandbox
 
 
 @pytest.mark.asyncio
-async def test_mock_sandbox_execute():
+async def test_mock_sandbox_execute() -> None:
     sandbox = MockSandbox()
     request = ExecutionRequest(code="print('hello')", language="python")
     response = await sandbox.execute(request)

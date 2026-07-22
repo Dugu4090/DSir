@@ -6,12 +6,12 @@ from src.services.knowledge_graph import KnowledgeGraph
 
 
 @pytest.fixture
-def knowledge_graph(db_session: AsyncSession):
+def knowledge_graph(db_session: AsyncSession) -> None:
     return KnowledgeGraph(db_session)
 
 
 @pytest.mark.asyncio
-async def test_topological_sort(knowledge_graph: KnowledgeGraph, db_session: AsyncSession):
+async def test_topological_sort(knowledge_graph: KnowledgeGraph, db_session: AsyncSession) -> None:
     course = Course(slug="python", title="Python", technology="python")
     db_session.add(course)
     await db_session.flush()

@@ -6,14 +6,14 @@ from src.services.rag import RAGService
 
 
 @pytest.fixture
-def rag_service(db_session: AsyncSession):
+def rag_service(db_session: AsyncSession) -> None:
     from src.ai.manager import get_ai_manager
 
     return RAGService(db_session, get_ai_manager())
 
 
 @pytest.mark.asyncio
-async def test_index_and_search(rag_service: RAGService, db_session: AsyncSession):
+async def test_index_and_search(rag_service: RAGService, db_session: AsyncSession) -> None:
     chunk = await rag_service.index_chunk(
         content="Python lists are ordered, mutable collections.",
         chunk_type="lesson",
@@ -26,7 +26,7 @@ async def test_index_and_search(rag_service: RAGService, db_session: AsyncSessio
 
 
 @pytest.mark.asyncio
-async def test_search_for_user(rag_service: RAGService, db_session: AsyncSession):
+async def test_search_for_user(rag_service: RAGService, db_session: AsyncSession) -> None:
     from src.models.learning import ConceptMastery
     from src.models.user import User
 
