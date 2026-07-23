@@ -2,11 +2,12 @@
 
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
+import { BookOpen, CheckCircle2, GraduationCap } from "lucide-react";
 import {
   fetchCourses,
   fetchDueRevisions,
-  fetchEnrollments,
   fetchMastery,
+  fetchMyLearning,
   fetchRoadmaps,
   fetchStrengthsWeaknesses,
 } from "@/lib/api";
@@ -15,12 +16,12 @@ import { Button } from "@/components/ui/button";
 
 export default function DashboardPage() {
   const {
-    data: enrollments,
-    isLoading: enrollmentsLoading,
-    error: enrollmentsError,
+    data: myLearning,
+    isLoading: myLearningLoading,
+    error: myLearningError,
   } = useQuery({
-    queryKey: ["enrollments"],
-    queryFn: fetchEnrollments,
+    queryKey: ["my-learning"],
+    queryFn: fetchMyLearning,
   });
 
   const { data: roadmaps, isLoading: roadmapsLoading, error: roadmapsError } = useQuery({
@@ -49,10 +50,10 @@ export default function DashboardPage() {
   });
 
   const isLoading =
-    enrollmentsLoading || roadmapsLoading || dueLoading || statsLoading || masteryLoading || coursesLoading;
+    myLearningLoading || roadmapsLoading || dueLoading || statsLoading || masteryLoading || coursesLoading;
 
   const hasError =
-    enrollmentsError || roadmapsError || revisionsError || statsError || masteryError || coursesError;
+    myLearningError || roadmapsError || revisionsError || statsError || masteryError || coursesError;
 
   if (isLoading) {
     return (
@@ -101,7 +102,7 @@ export default function DashboardPage() {
         <StatCard label="Average Mastery" value={`${avgScore}%`} href="/profile" />
         <StatCard label="Due for Review" value={String(dueCount)} href="/revision" />
         <StatCard label="Weak Concepts" value={String(weakCount)} href="/revision" />
-        <StatCard label="Enrollments" value={String(enrollments?.items.length ?? 0)} href="/courses" />
+        <StatCard label="Enrollments" value={String(myLearning?.items.length ?? 0)} href="/courses" />
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -152,22 +153,68 @@ export default function DashboardPage() {
       </div>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-900">
-        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Continue Learning</h2>
-        {courses && courses.items.length > 0 ? (
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">My Learning</h2>
+          <Link
+            href="/courses"
+            className="text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+          >
+            Browse courses
+          </Link>
+        </div>
+        {myLearning && myLearning.items.length > 0 ? (
           <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {courses.items.slice(0, 3).map((course) => (
-              <Link
-                key={course.id}
-                href={`/courses/${course.id}`}
-                className="rounded-xl border border-slate-200 bg-slate-50 p-4 transition hover:border-blue-300 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-blue-500"
-              >
-                <h3 className="font-semibold text-slate-900 dark:text-white">{course.title}</h3>
-                <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">{course.technology}</p>
-              </Link>
-            ))}
+            {myLearning.items.map((item) =>
+              item.course ? (
+                <div
+                  key={item.enrollment.id}
+                  className="rounded-xl border border-slate-200 bg-slate-50 p-4 transition hover:border-blue-300 dark:border-slate-700 dark:bg-slate-800"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <h3 className="font-semibold text-slate-900 dark:text-white">{item.course.title}</h3>
+                    {item.progress.progress_percent === 100 ? (
+                      <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+                    ) : (
+                      <BookOpen className="h-5 w-5 text-blue-500" />
+                    )}
+                  </div>
+                  <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">{item.course.programming_language}</p>
+                  <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
+                    <div
+                      className="h-full rounded-full bg-blue-600 transition-all"
+                      style={{ width: `${item.progress.progress_percent}%` }}
+                    />
+                  </div>
+                  <div className="mt-2 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+                    <span>{item.progress.progress_percent}% complete</span>
+                    <span>
+                      {item.progress.completed_lessons}/{item.progress.total_lessons} lessons
+                    </span>
+                  </div>
+                  <Link
+                    href={`/courses/${item.course.id}`}
+                    className="mt-3 inline-block text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                  >
+                    Continue learning →
+                  </Link>
+                </div>
+              ) : null
+            )}
           </div>
         ) : (
-          <p className="mt-4 text-slate-600 dark:text-slate-400">No courses available right now.</p>
+          <div className="mt-4 rounded-xl border border-dashed border-slate-300 p-8 text-center dark:border-slate-700">
+            <GraduationCap className="mx-auto h-12 w-12 text-slate-400" />
+            <h3 className="mt-4 text-lg font-semibold text-slate-900 dark:text-white">No enrollments yet</h3>
+            <p className="mt-2 text-slate-600 dark:text-slate-400">
+              Enroll in a course to start tracking your progress.
+            </p>
+            <Link
+              href="/courses"
+              className="mt-4 inline-block rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
+            >
+              Explore courses
+            </Link>
+          </div>
         )}
       </section>
     </div>

@@ -14,6 +14,14 @@ export interface Course {
   slug: string;
   title: string;
   description: string | null;
+  thumbnail: string | null;
+  category: string | null;
+  programming_language: string;
+  difficulty: string;
+  estimated_duration: number;
+  instructor: string | null;
+  skills: string[];
+  learning_objectives: string[];
   technology: string;
   is_published: boolean;
   created_at: string;
@@ -44,12 +52,48 @@ export interface Lesson {
   title: string;
   lesson_type: string;
   position: number;
+  duration_minutes: number;
+  is_completed?: boolean;
   created_at: string;
 }
 
 export interface LessonDetail extends Lesson {
   content: Record<string, unknown>;
   meta: Record<string, unknown>;
+}
+
+export interface CourseModule {
+  id: string;
+  slug: string;
+  title: string;
+  description: string | null;
+  difficulty: string | null;
+  order: number;
+  created_at: string;
+  lessons: Lesson[];
+}
+
+export interface CourseDetailResponse {
+  course: Course;
+  modules: CourseModule[];
+  enrollment: Enrollment | null;
+  progress: {
+    completed_lessons: number;
+    total_lessons: number;
+    progress_percent: number;
+  };
+}
+
+export interface MyLearningResponse {
+  items: Array<{
+    enrollment: Enrollment;
+    course: Course | null;
+    progress: {
+      completed_lessons: number;
+      total_lessons: number;
+      progress_percent: number;
+    };
+  }>;
 }
 
 export interface Enrollment {
@@ -60,6 +104,8 @@ export interface Enrollment {
   started_at: string;
   completed_at: string | null;
   status: string;
+  progress_percent: number;
+  last_lesson_id: string | null;
 }
 
 export interface Mastery {
@@ -103,9 +149,17 @@ export interface ExecutionResult {
 export { login, register, logout, fetchMe } from "./axios";
 
 // Courses
-export async function fetchCourses(technology?: string) {
+export async function fetchCourses(params?: {
+  technology?: string;
+  programming_language?: string;
+  difficulty?: string;
+  category?: string;
+  search?: string;
+  sort?: string;
+  order?: string;
+}) {
   const res = await apiClient.get<PaginatedResponse<Course>>("/courses/", {
-    params: { technology },
+    params,
   });
   return res.data;
 }
@@ -115,8 +169,30 @@ export async function fetchCourse(id: string) {
   return res.data;
 }
 
+export async function fetchCourseDetail(id: string) {
+  const res = await apiClient.get<CourseDetailResponse>(`/courses/${id}/detail`);
+  return res.data;
+}
+
 export async function fetchCourseConcepts(courseId: string) {
   const res = await apiClient.get<PaginatedResponse<Concept>>(`/courses/${courseId}/concepts`);
+  return res.data;
+}
+
+// My Learning
+export async function fetchMyLearning() {
+  const res = await apiClient.get<MyLearningResponse>("/enrollments/my-learning");
+  return res.data;
+}
+
+// Lesson progress
+export async function updateLessonProgress(lessonId: string, is_completed: boolean = true) {
+  const res = await apiClient.post(`/lessons/${lessonId}/progress`, { is_completed });
+  return res.data;
+}
+
+export async function fetchLessonProgress(lessonId: string) {
+  const res = await apiClient.get(`/lessons/${lessonId}/progress`);
   return res.data;
 }
 
