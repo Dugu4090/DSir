@@ -43,7 +43,7 @@ def upgrade() -> None:
 
     # Concept order
     op.add_column("concepts", sa.Column("order", sa.Integer(), nullable=True))
-    op.execute("UPDATE concepts SET order = 0 WHERE order IS NULL")
+    op.execute('UPDATE concepts SET "order" = 0 WHERE "order" IS NULL')
     op.alter_column("concepts", "order", nullable=False)
 
     # Lesson duration
