@@ -2,16 +2,25 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
-from src.core.dependencies import require_content_creator
+from src.core.dependencies import get_current_active_user, require_content_creator
 from src.db.session import get_db
-from src.models.content import Concept, Course
+from src.models.content import Concept, Course, Lesson
+from src.models.learning import Enrollment, LessonProgress
 from src.models.user import User
 from src.schemas.common import PaginatedResponse, PaginationParams
-from src.schemas.content import ConceptRead, CourseRead
+from src.schemas.content import (
+    ConceptDetail,
+    ConceptRead,
+    CourseCreate,
+    CourseRead,
+    CourseUpdate,
+)
+from src.schemas.lesson import LessonRead
 
 router = APIRouter()
 
@@ -19,7 +28,13 @@ router = APIRouter()
 @router.get("/", response_model=PaginatedResponse)
 async def list_courses(
     technology: str | None = None,
+    programming_language: str | None = None,
+    difficulty: str | None = None,
+    category: str | None = None,
+    search: str | None = None,
     published_only: bool = True,
+    sort: str = Query("title", pattern="^(title|created_at|difficulty|estimated_duration)$"),
+    order: str = Query("asc", pattern="^(asc|desc)$"),
     pagination: PaginationParams = Depends(),
     db: AsyncSession = Depends(get_db),
 ) -> PaginatedResponse:
@@ -28,12 +43,30 @@ async def list_courses(
         query = query.where(Course.is_published.is_(True))
     if technology:
         query = query.where(Course.technology == technology)
+    if programming_language:
+        query = query.where(Course.programming_language == programming_language)
+    if difficulty:
+        query = query.where(Course.difficulty.ilike(difficulty))
+    if category:
+        query = query.where(Course.category.ilike(category))
+    if search:
+        query = query.where(
+            Course.title.ilike(f"%{search}%") | Course.description.ilike(f"%{search}%")
+        )
 
     total_result = await db.execute(query)
     total = len(total_result.scalars().all())
 
+    sort_column = getattr(Course, sort, Course.title)
+    if order == "desc":
+        sort_column = sort_column.desc()
+    else:
+        sort_column = sort_column.asc()
+
     result = await db.execute(
-        query.order_by(Course.title).offset((pagination.page - 1) * pagination.per_page).limit(pagination.per_page)
+        query.order_by(sort_column)
+        .offset((pagination.page - 1) * pagination.per_page)
+        .limit(pagination.per_page)
     )
     courses = result.scalars().all()
 
@@ -55,9 +88,91 @@ async def get_course(course_id: UUID, db: AsyncSession = Depends(get_db)) -> Cou
     return course
 
 
+@router.get("/{course_id}/detail", response_model=dict)
+async def get_course_detail(
+    course_id: UUID,
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, object]:
+    result = await db.execute(
+        select(Course)
+        .where(Course.id == course_id)
+        .options(selectinload(Course.concepts))
+    )
+    course = result.unique().scalar_one_or_none()
+    if course is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Course not found")
+
+    # Get all concepts (modules) ordered
+    concepts_result = await db.execute(
+        select(Concept).where(Concept.course_id == course_id).order_by(Concept.order, Concept.created_at)
+    )
+    concepts = concepts_result.scalars().all()
+
+    # Get all lessons grouped by concept
+    lessons_result = await db.execute(
+        select(Lesson).where(Lesson.concept_id.in_([c.id for c in concepts])).order_by(Lesson.position)
+    )
+    lessons = lessons_result.scalars().all()
+    lessons_by_concept: dict[UUID, list[Lesson]] = {}
+    for lesson in lessons:
+        lessons_by_concept.setdefault(lesson.concept_id, []).append(lesson)
+
+    # Get progress
+    progress_result = await db.execute(
+        select(LessonProgress.lesson_id).where(
+            LessonProgress.user_id == current_user.id,
+            LessonProgress.is_completed.is_(True),
+        )
+    )
+    completed_lesson_ids = {row[0] for row in progress_result.all()}
+
+    # Enrollment
+    enrollment_result = await db.execute(
+        select(Enrollment).where(
+            Enrollment.user_id == current_user.id,
+            Enrollment.course_id == course_id,
+        )
+    )
+    enrollment = enrollment_result.scalar_one_or_none()
+
+    modules_out = []
+    total_lessons = 0
+    completed_count = 0
+    for concept in concepts:
+        concept_lessons = lessons_by_concept.get(concept.id, [])
+        module_lessons = []
+        for lesson in concept_lessons:
+            total_lessons += 1
+            if lesson.id in completed_lesson_ids:
+                completed_count += 1
+            module_lessons.append(LessonRead.model_validate(lesson).model_dump())
+
+        modules_out.append(
+            {
+                **ConceptRead.model_validate(concept).model_dump(),
+                "lessons": module_lessons,
+            }
+        )
+
+    total = total_lessons if total_lessons > 0 else 1
+    progress_percent = int((completed_count / total) * 100)
+
+    return {
+        "course": CourseRead.model_validate(course).model_dump(),
+        "modules": modules_out,
+        "enrollment": Enrollment.model_validate(enrollment).model_dump() if enrollment else None,
+        "progress": {
+            "completed_lessons": completed_count,
+            "total_lessons": total_lessons,
+            "progress_percent": progress_percent,
+        },
+    }
+
+
 @router.post("/", response_model=CourseRead, status_code=status.HTTP_201_CREATED)
 async def create_course(
-    course: CourseRead,
+    course: CourseCreate,
     current_user: User = Depends(require_content_creator),
     db: AsyncSession = Depends(get_db),
 ) -> Course:
@@ -71,19 +186,42 @@ async def create_course(
     return db_course
 
 
+@router.patch("/{course_id}", response_model=CourseRead)
+async def update_course(
+    course_id: UUID,
+    course_update: CourseUpdate,
+    current_user: User = Depends(require_content_creator),
+    db: AsyncSession = Depends(get_db),
+) -> Course:
+    result = await db.execute(select(Course).where(Course.id == course_id))
+    course = result.scalar_one_or_none()
+    if course is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Course not found")
+
+    update_data = course_update.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(course, field, value)
+
+    await db.commit()
+    await db.refresh(course)
+    return course
+
+
 @router.get("/{course_id}/concepts", response_model=PaginatedResponse)
 async def list_course_concepts(
     course_id: UUID,
     pagination: PaginationParams = Depends(),
     db: AsyncSession = Depends(get_db),
 ) -> PaginatedResponse:
-    total_result = await db.execute(select(Concept).where(Concept.course_id == course_id))
+    total_result = await db.execute(
+        select(Concept).where(Concept.course_id == course_id).order_by(Concept.order, Concept.created_at)
+    )
     total = len(total_result.scalars().all())
 
     result = await db.execute(
         select(Concept)
         .where(Concept.course_id == course_id)
-        .order_by(Concept.created_at)
+        .order_by(Concept.order, Concept.created_at)
         .offset((pagination.page - 1) * pagination.per_page)
         .limit(pagination.per_page)
     )

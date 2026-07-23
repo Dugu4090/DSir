@@ -35,6 +35,7 @@ class User(Base):
     roles: Mapped[list[UserRole]] = relationship("UserRole", back_populates="user")
     refresh_tokens: Mapped[list[RefreshToken]] = relationship("RefreshToken", back_populates="user")
     enrollments: Mapped[list[Enrollment]] = relationship("Enrollment", back_populates="user")
+    lesson_progress: Mapped[list["LessonProgress"]] = relationship("LessonProgress", back_populates="user")
 
 
 class UserProfile(Base):
