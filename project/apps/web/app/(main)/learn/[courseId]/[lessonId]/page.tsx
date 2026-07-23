@@ -60,11 +60,18 @@ function LessonContent({ content }: { content: Record<string, unknown> }) {
   const body = typeof content.body === "string" ? content.body : JSON.stringify(content, null, 2);
 
   return (
-    <div className="pro prose prose-slate max-w-none dark:prose-invert">
+    <div className="prose prose-slate max-w-none dark:prose-invert">
       <ReactMarkdown
         components={{
           code({ children, className }) {
             const language = className?.replace("language-", "") || "text";
+            if (className === undefined || className === "") {
+              return (
+                <code className="rounded bg-slate-100 px-1 py-0.5 font-mono text-sm dark:bg-slate-800">
+                  {children}
+                </code>
+              );
+            }
             return <CodeBlock language={language} code={String(children)} />;
           },
         }}
@@ -157,6 +164,8 @@ export default function LearnPage() {
     typeof lesson.content === "object" && lesson.content !== null
       ? (lesson.content as Record<string, unknown>)
       : { body: String(lesson.content || "") };
+
+  const currentLesson = lesson;
 
   return (
     <div className="flex h-[calc(100vh-7rem)] flex-col gap-4 lg:flex-row">

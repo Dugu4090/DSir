@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import Image from "next/image";
 import Link from "next/link";
 import { BookOpen, Clock, Filter, Search, Sparkles } from "lucide-react";
 import { fetchCourses } from "@/lib/api";
@@ -221,10 +222,12 @@ export default function CoursesPage() {
               className="group flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white transition hover:shadow-lg dark:border-slate-700 dark:bg-slate-900"
             >
               <div className="relative h-48 overflow-hidden">
-                <img
+                <Image
                   src={course.thumbnail ?? "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop"}
                   alt={course.title}
-                  className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                  fill
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                  className="object-cover transition duration-300 group-hover:scale-105"
                 />
                 <div className="absolute left-3 top-3">
                   <span

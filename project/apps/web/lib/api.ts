@@ -230,7 +230,7 @@ export async function fetchConceptLessons(conceptId: string) {
 }
 
 export async function fetchLesson(lessonId: string) {
-  const res = await apiClient.get<Lesson>(`/lessons/${lessonId}`);
+  const res = await apiClient.get<LessonDetail>(`/lessons/${lessonId}`);
   return res.data;
 }
 

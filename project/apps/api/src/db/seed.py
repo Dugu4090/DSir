@@ -42,7 +42,7 @@ async def seed_courses(db: AsyncSession) -> None:
                             "position": 1,
                             "duration_minutes": 15,
                             "content": {
-                                "body": "# Introduction to Python\n\nPython is a versatile, high-level programming language known for its readability and simplicity. It's used in web development, data science, automation, and more.\n\n## Why Python?\n\n- Easy to learn and read\n- Huge community and ecosystem\n- Versatile: web, data, AI, automation\n\n## Your First Program\n\n```python\nprint(\"Hello, World!\")\n```\n\nRun this code to see Python in action!"
+                                "body": '# Introduction to Python\n\nPython is a versatile, high-level programming language known for its readability and simplicity. It\'s used in web development, data science, automation, and more.\n\n## Why Python?\n\n- Easy to learn and read\n- Huge community and ecosystem\n- Versatile: web, data, AI, automation\n\n## Your First Program\n\n```python\nprint("Hello, World!")\n```\n\nRun this code to see Python in action!'
                             },
                         },
                         {
@@ -52,7 +52,7 @@ async def seed_courses(db: AsyncSession) -> None:
                             "position": 2,
                             "duration_minutes": 25,
                             "content": {
-                                "body": "# Variables and Data Types\n\nIn Python, variables are created by assigning a value to a name.\n\n```python\nname = \"Alice\"\nage = 30\nis_student = True\n```\n\n## Common Data Types\n\n- `str` - text\n- `int` - whole numbers\n- `float` - decimal numbers\n- `bool` - True or False\n- `list` - ordered collection\n- `dict` - key-value pairs\n\nTry creating your own variables in the code editor."
+                                "body": '# Variables and Data Types\n\nIn Python, variables are created by assigning a value to a name.\n\n```python\nname = "Alice"\nage = 30\nis_student = True\n```\n\n## Common Data Types\n\n- `str` - text\n- `int` - whole numbers\n- `float` - decimal numbers\n- `bool` - True or False\n- `list` - ordered collection\n- `dict` - key-value pairs\n\nTry creating your own variables in the code editor.'
                             },
                         },
                     ],
@@ -70,7 +70,7 @@ async def seed_courses(db: AsyncSession) -> None:
                             "position": 1,
                             "duration_minutes": 20,
                             "content": {
-                                "body": "# Conditionals\n\nUse `if`, `elif`, and `else` to make decisions in your code.\n\n```python\nscore = 85\nif score >= 90:\n    print(\"A\")\nelif score >= 80:\n    print(\"B\")\nelse:\n    print(\"Keep trying!\")\n```"
+                                "body": '# Conditionals\n\nUse `if`, `elif`, and `else` to make decisions in your code.\n\n```python\nscore = 85\nif score >= 90:\n    print("A")\nelif score >= 80:\n    print("B")\nelse:\n    print("Keep trying!")\n```'
                             },
                         },
                         {
@@ -98,7 +98,7 @@ async def seed_courses(db: AsyncSession) -> None:
                             "position": 1,
                             "duration_minutes": 30,
                             "content": {
-                                "body": "# Defining Functions\n\nFunctions help you organize code into reusable pieces.\n\n```python\ndef greet(name):\n    return f\"Hello, {name}!\"\n\nprint(greet(\"Alice\"))\n```"
+                                "body": '# Defining Functions\n\nFunctions help you organize code into reusable pieces.\n\n```python\ndef greet(name):\n    return f"Hello, {name}!"\n\nprint(greet("Alice"))\n```'
                             },
                         },
                     ],
@@ -196,7 +196,7 @@ async def seed_courses(db: AsyncSession) -> None:
                             "position": 1,
                             "duration_minutes": 20,
                             "content": {
-                                "body": "# Variables and Types\n\nJavaScript has `let`, `const`, and `var` for declaring variables.\n\n```javascript\nconst name = \"Alice\";\nlet age = 30;\n```"
+                                "body": '# Variables and Types\n\nJavaScript has `let`, `const`, and `var` for declaring variables.\n\n```javascript\nconst name = "Alice";\nlet age = 30;\n```'
                             },
                         },
                     ],
@@ -254,7 +254,7 @@ async def seed_courses(db: AsyncSession) -> None:
                             "position": 1,
                             "duration_minutes": 15,
                             "content": {
-                                "body": "# What is FastAPI?\n\nFastAPI is a modern, fast web framework for building APIs with Python.\n\n```python\nfrom fastapi import FastAPI\n\napp = FastAPI()\n\n@app.get(\"/\")\ndef read_root():\n    return {\"message\": \"Hello, World!\"}\n```"
+                                "body": '# What is FastAPI?\n\nFastAPI is a modern, fast web framework for building APIs with Python.\n\n```python\nfrom fastapi import FastAPI\n\napp = FastAPI()\n\n@app.get("/")\ndef read_root():\n    return {"message": "Hello, World!"}\n```'
                             },
                         },
                     ],

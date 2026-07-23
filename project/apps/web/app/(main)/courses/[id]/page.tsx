@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
+import Image from "next/image";
 import Link from "next/link";
 import {
   BookOpen,
@@ -118,10 +119,12 @@ export default function CourseDetailPage() {
                 <BookOpen className="h-4 w-4" />
                 <span>{modules.flatMap((m) => m.lessons).length} lessons</span>
               </div>
-              <div className="flex items-center gap-2">
-                <User className="h-4 w-4" />
-                <span>{course.instructor}</span>
-              </div>
+              {course.instructor && (
+                <div className="flex items-center gap-2">
+                  <User className="h-4 w-4" />
+                  <span>{course.instructor}</span>
+                </div>
+              )}
             </div>
 
             <div className="flex flex-wrap gap-3">
@@ -158,10 +161,12 @@ export default function CourseDetailPage() {
           </div>
 
           <div className="relative hidden aspect-video overflow-hidden rounded-2xl lg:block">
-            <img
+            <Image
               src={course.thumbnail ?? "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop"}
               alt={course.title}
-              className="h-full w-full object-cover"
+              fill
+              sizes="(max-width: 1024px) 100vw, 50vw"
+              className="object-cover"
             />
           </div>
         </div>
