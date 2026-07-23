@@ -5,10 +5,13 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
-from src.core.dependencies import require_admin
+from src.core.dependencies import get_current_active_user, require_admin
 from src.core.security import get_password_hash
 from src.db.session import get_db
+from src.models.content import Course
+from src.models.learning import UserActivity
 from src.models.user import User, UserRole
 from src.schemas.common import PaginatedResponse, PaginationParams
 from src.schemas.user import UserCreate, UserRead
@@ -84,3 +87,110 @@ async def add_role(
     db.add(UserRole(user_id=user_id, role=role))
     await db.commit()
     return {"status": "ok"}
+
+
+@router.get("/me/activity", response_model=PaginatedResponse)
+async def get_my_activity(
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+) -> PaginatedResponse:
+    query = (
+        select(UserActivity)
+        .where(UserActivity.user_id == current_user.id)
+        .order_by(UserActivity.created_at.desc())
+    )
+    total_result = await db.execute(query)
+    total = len(total_result.scalars().all())
+
+    result = await db.execute(query.limit(20))
+    activities = result.scalars().all()
+    return PaginatedResponse(
+        items=[
+            {
+                "id": str(activity.id),
+                "activity_type": activity.activity_type,
+                "entity_type": activity.entity_type,
+                "entity_id": str(activity.entity_id) if activity.entity_id else None,
+                "meta": activity.meta or {},
+                "created_at": activity.created_at.isoformat() if activity.created_at else None,
+            }
+            for activity in activities
+        ],
+        total=total,
+        page=1,
+        per_page=20,
+        pages=(total + 20 - 1) // 20,
+    )
+
+
+@router.post("/me/activity", status_code=status.HTTP_204_NO_CONTENT)
+async def log_my_activity(
+    activity_type: str,
+    entity_type: str | None = None,
+    entity_id: UUID | None = None,
+    meta: dict | None = None,
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+) -> None:
+    activity = UserActivity(
+        user_id=current_user.id,
+        activity_type=activity_type,
+        entity_type=entity_type,
+        entity_id=entity_id,
+        meta=meta or {},
+    )
+    db.add(activity)
+    await db.commit()
+
+
+@router.get("/me/recent-courses", response_model=PaginatedResponse)
+async def get_recent_courses(
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+) -> PaginatedResponse:
+    from src.schemas.content import CourseRead
+
+    subquery = (
+        select(
+            UserActivity.entity_id,
+            UserActivity.created_at.label("viewed_at"),
+        )
+        .where(
+            UserActivity.user_id == current_user.id,
+            UserActivity.activity_type == "viewed_course",
+            UserActivity.entity_type == "course",
+            UserActivity.entity_id.isnot(None),
+        )
+        .order_by(UserActivity.created_at.desc())
+    ).subquery()
+
+    query = (
+        select(Course, subquery.c.viewed_at)
+        .join(subquery, Course.id == subquery.c.entity_id)
+        .order_by(subquery.c.viewed_at.desc())
+    )
+    total_result = await db.execute(query)
+    rows = total_result.all()
+    total = len(rows)
+
+    items = []
+    seen: set[UUID] = set()
+    for row in rows:
+        course = row[0]
+        if course.id in seen:
+            continue
+        seen.add(course.id)
+        items.append(
+            {
+                "course": CourseRead.model_validate(course).model_dump(),
+                "viewed_at": row[1].isoformat() if row[1] else None,
+            }
+        )
+
+    return PaginatedResponse(
+        items=items[:20],
+        total=total,
+        page=1,
+        per_page=20,
+        pages=(total + 20 - 1) // 20,
+    )

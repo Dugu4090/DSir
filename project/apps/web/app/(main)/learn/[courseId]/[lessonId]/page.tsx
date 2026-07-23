@@ -1,11 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import ReactMarkdown from "react-markdown";
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+import { oneDark } from "react-syntax-highlighter/dist/cjs/styles/prism";
 import {
   CheckCircle2,
   ChevronLeft,
@@ -16,7 +18,7 @@ import {
   MessageCircle,
   Play,
 } from "lucide-react";
-import { fetchCourseDetail, fetchLesson, updateLessonProgress } from "@/lib/api";
+import { fetchCourseDetail, fetchLesson, logActivity, updateLessonProgress } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { ErrorMessage } from "@/components/ui/error-message";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -41,17 +43,21 @@ function CodeBlock({ language, code }: CodeBlockProps) {
   return (
     <div className="my-4 overflow-hidden rounded-xl border border-slate-200 bg-slate-950 dark:border-slate-700">
       <div className="flex items-center justify-between border-b border-slate-800 px-4 py-2">
-        <span className="text-xs font-medium text-slate-400">{language}</span>
+        <span className="text-xs font-medium uppercase tracking-wide text-slate-400">{language}</span>
         <button
           onClick={handleCopy}
-          className="text-xs text-slate-400 hover:text-slate-200"
+          className="rounded px-2 py-1 text-xs font-medium text-slate-400 transition hover:bg-slate-800 hover:text-slate-200"
         >
           {copied ? "Copied!" : "Copy"}
         </button>
       </div>
-      <pre className="overflow-x-auto p-4">
-        <code className="text-sm text-slate-100">{code}</code>
-      </pre>
+      <SyntaxHighlighter
+        language={language || "text"}
+        style={oneDark}
+        customStyle={{ margin: 0, borderRadius: 0, fontSize: "0.875rem", lineHeight: "1.5rem" }}
+      >
+        {code}
+      </SyntaxHighlighter>
     </div>
   );
 }
@@ -63,16 +69,18 @@ function LessonContent({ content }: { content: Record<string, unknown> }) {
     <div className="prose prose-slate max-w-none dark:prose-invert">
       <ReactMarkdown
         components={{
-          code({ children, className }) {
-            const language = className?.replace("language-", "") || "text";
-            if (className === undefined || className === "") {
+          code({ inline, children, className }) {
+            const match = /language-(\w+)/.exec(className || "");
+            const language = match ? match[1] : className?.replace("language-", "") || "text";
+            const codeString = String(children).replace(/\n$/, "");
+            if (!className || inline) {
               return (
                 <code className="rounded bg-slate-100 px-1 py-0.5 font-mono text-sm dark:bg-slate-800">
                   {children}
                 </code>
               );
             }
-            return <CodeBlock language={language} code={String(children)} />;
+            return <CodeBlock language={language} code={codeString} />;
           },
         }}
       >
@@ -131,6 +139,12 @@ export default function LearnPage() {
   const currentModule = courseDetail?.modules.find((m) =>
     m.lessons.some((l) => l.id === lessonId)
   );
+
+  useEffect(() => {
+    if (lessonId) {
+      logActivity("viewed_lesson", "lesson", lessonId).catch(() => null);
+    }
+  }, [lessonId]);
 
   const handleSendMessage = () => {
     if (!chatInput.trim()) return;

@@ -174,6 +174,11 @@ export async function fetchCourseDetail(id: string) {
   return res.data;
 }
 
+export async function continueCourse(id: string) {
+  const res = await apiClient.get<{ course_id: string; lesson_id: string | null }>(`/courses/${id}/continue`);
+  return res.data;
+}
+
 export async function fetchCourseConcepts(courseId: string) {
   const res = await apiClient.get<PaginatedResponse<Concept>>(`/courses/${courseId}/concepts`);
   return res.data;
@@ -311,6 +316,44 @@ export async function fetchAllConceptsMap(): Promise<
 export async function runCode(data: { language: string; code: string }) {
   const res = await apiClient.post<ExecutionResult>("/execution/run", data);
   return res.data;
+}
+
+export interface Bookmark {
+  id: string;
+  user_id: string;
+  course_id: string;
+  created_at: string;
+  course?: Course;
+}
+
+export interface RecentCourse {
+  course: Course;
+  viewed_at: string;
+}
+
+export async function fetchBookmarks(params?: { page?: number; per_page?: number }) {
+  const res = await apiClient.get<PaginatedResponse<Bookmark>>("/bookmarks/", { params });
+  return res.data;
+}
+
+export async function createBookmark(courseId: string) {
+  const res = await apiClient.post<Bookmark>("/bookmarks/", { course_id: courseId });
+  return res.data;
+}
+
+export async function deleteBookmark(bookmarkId: string) {
+  await apiClient.delete(`/bookmarks/${bookmarkId}`);
+}
+
+export async function fetchRecentCourses() {
+  const res = await apiClient.get<PaginatedResponse<RecentCourse>>("/users/me/recent-courses");
+  return res.data;
+}
+
+export async function logActivity(activityType: string, entityType?: string, entityId?: string) {
+  await apiClient.post("/users/me/activity", undefined, {
+    params: { activity_type: activityType, entity_type: entityType, entity_id: entityId },
+  });
 }
 
 // AI

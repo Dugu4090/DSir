@@ -3,6 +3,7 @@ from fastapi import APIRouter
 from src.api.v1 import (
     ai,
     auth,
+    bookmarks,
     courses,
     enrollments,
     execution,
@@ -23,6 +24,7 @@ api_router = APIRouter()
 api_router.include_router(auth.router, prefix="/auth", tags=["auth"])
 api_router.include_router(users.router, prefix="/users", tags=["users"])
 api_router.include_router(profiles.router, prefix="/profiles", tags=["profiles"])
+api_router.include_router(bookmarks.router, prefix="/bookmarks", tags=["bookmarks"])
 api_router.include_router(courses.router, prefix="/courses", tags=["courses"])
 api_router.include_router(roadmaps.router, prefix="/roadmaps", tags=["roadmaps"])
 api_router.include_router(enrollments.router, prefix="/enrollments", tags=["enrollments"])

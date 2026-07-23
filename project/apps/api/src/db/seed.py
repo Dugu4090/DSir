@@ -8,384 +8,379 @@ from src.db.session import AsyncSessionLocal
 from src.models.content import Concept, Course, Lesson, Roadmap, RoadmapCourse
 
 
-async def seed_courses(db: AsyncSession) -> None:
-    courses_data: list[dict[str, Any]] = [
-        {
-            "slug": "python-fundamentals",
-            "title": "Python Fundamentals",
-            "description": "Master Python from the ground up. Learn syntax, data structures, functions, object-oriented programming, and build real projects.",
-            "thumbnail": "https://images.unsplash.com/photo-1526379095098-d400fd843cea?w=800&auto=format&fit=crop",
-            "category": "Backend",
-            "programming_language": "Python",
-            "technology": "Python",
-            "difficulty": "beginner",
-            "estimated_duration": 1800,
-            "instructor": "DSir Learning Team",
-            "skills": ["Python", "Data Structures", "OOP", "File I/O", "Error Handling"],
-            "learning_objectives": [
-                "Write clean, idiomatic Python code",
-                "Understand variables, types, and control flow",
-                "Build reusable functions and classes",
-                "Handle errors and work with files",
-            ],
-            "is_published": True,
-            "modules": [
-                {
-                    "slug": "getting-started",
-                    "title": "Getting Started with Python",
-                    "description": "Install Python, write your first program, and learn the basics.",
-                    "order": 1,
-                    "lessons": [
-                        {
-                            "slug": "introduction",
-                            "title": "Introduction to Python",
-                            "lesson_type": "reading",
-                            "position": 1,
-                            "duration_minutes": 15,
-                            "content": {
-                                "body": '# Introduction to Python\n\nPython is a versatile, high-level programming language known for its readability and simplicity. It\'s used in web development, data science, automation, and more.\n\n## Why Python?\n\n- Easy to learn and read\n- Huge community and ecosystem\n- Versatile: web, data, AI, automation\n\n## Your First Program\n\n```python\nprint("Hello, World!")\n```\n\nRun this code to see Python in action!'
-                            },
-                        },
-                        {
-                            "slug": "variables-and-data-types",
-                            "title": "Variables and Data Types",
-                            "lesson_type": "reading",
-                            "position": 2,
-                            "duration_minutes": 25,
-                            "content": {
-                                "body": '# Variables and Data Types\n\nIn Python, variables are created by assigning a value to a name.\n\n```python\nname = "Alice"\nage = 30\nis_student = True\n```\n\n## Common Data Types\n\n- `str` - text\n- `int` - whole numbers\n- `float` - decimal numbers\n- `bool` - True or False\n- `list` - ordered collection\n- `dict` - key-value pairs\n\nTry creating your own variables in the code editor.'
-                            },
-                        },
-                    ],
-                },
-                {
-                    "slug": "control-flow",
-                    "title": "Control Flow",
-                    "description": "Learn conditionals and loops to control program execution.",
-                    "order": 2,
-                    "lessons": [
-                        {
-                            "slug": "conditionals",
-                            "title": "Conditionals",
-                            "lesson_type": "reading",
-                            "position": 1,
-                            "duration_minutes": 20,
-                            "content": {
-                                "body": '# Conditionals\n\nUse `if`, `elif`, and `else` to make decisions in your code.\n\n```python\nscore = 85\nif score >= 90:\n    print("A")\nelif score >= 80:\n    print("B")\nelse:\n    print("Keep trying!")\n```'
-                            },
-                        },
-                        {
-                            "slug": "loops",
-                            "title": "Loops",
-                            "lesson_type": "reading",
-                            "position": 2,
-                            "duration_minutes": 25,
-                            "content": {
-                                "body": "# Loops\n\nRepeat actions with `for` and `while` loops.\n\n```python\nfor i in range(5):\n    print(i)\n\ncount = 0\nwhile count < 5:\n    print(count)\n    count += 1\n```"
-                            },
-                        },
-                    ],
-                },
-                {
-                    "slug": "functions",
-                    "title": "Functions",
-                    "description": "Define reusable blocks of code with functions.",
-                    "order": 3,
-                    "lessons": [
-                        {
-                            "slug": "defining-functions",
-                            "title": "Defining Functions",
-                            "lesson_type": "reading",
-                            "position": 1,
-                            "duration_minutes": 30,
-                            "content": {
-                                "body": '# Defining Functions\n\nFunctions help you organize code into reusable pieces.\n\n```python\ndef greet(name):\n    return f"Hello, {name}!"\n\nprint(greet("Alice"))\n```'
-                            },
-                        },
-                    ],
-                },
-            ],
-        },
-        {
-            "slug": "html-css-mastery",
-            "title": "HTML & CSS Mastery",
-            "description": "Build beautiful, responsive websites from scratch with HTML5 and CSS3.",
-            "thumbnail": "https://images.unsplash.com/photo-1621839673705-661705edf509?w=800&auto=format&fit=crop",
-            "category": "Frontend",
-            "programming_language": "HTML/CSS",
-            "technology": "HTML/CSS",
-            "difficulty": "beginner",
-            "estimated_duration": 1200,
-            "instructor": "DSir Learning Team",
-            "skills": ["HTML5", "CSS3", "Flexbox", "Grid", "Responsive Design"],
-            "learning_objectives": [
-                "Build semantic HTML structures",
-                "Style pages with CSS",
-                "Create responsive layouts",
-                "Understand the box model",
-            ],
-            "is_published": True,
-            "modules": [
-                {
-                    "slug": "html-basics",
-                    "title": "HTML Basics",
-                    "description": "Learn the building blocks of the web.",
-                    "order": 1,
-                    "lessons": [
-                        {
-                            "slug": "what-is-html",
-                            "title": "What is HTML?",
-                            "lesson_type": "reading",
-                            "position": 1,
-                            "duration_minutes": 15,
-                            "content": {
-                                "body": "# What is HTML?\n\nHTML (HyperText Markup Language) is the standard markup language for documents designed to be displayed in a web browser.\n\n```html\n<!DOCTYPE html>\n<html>\n  <body>\n    <h1>Hello, World!</h1>\n  </body>\n</html>\n```"
-                            },
-                        },
-                    ],
-                },
-                {
-                    "slug": "css-fundamentals",
-                    "title": "CSS Fundamentals",
-                    "description": "Style your HTML with CSS.",
-                    "order": 2,
-                    "lessons": [
-                        {
-                            "slug": "selectors-and-properties",
-                            "title": "Selectors and Properties",
-                            "lesson_type": "reading",
-                            "position": 1,
-                            "duration_minutes": 25,
-                            "content": {
-                                "body": "# Selectors and Properties\n\nCSS selects HTML elements and applies styles to them.\n\n```css\nh1 {\n  color: blue;\n  font-size: 24px;\n}\n```"
-                            },
-                        },
-                    ],
-                },
-            ],
-        },
-        {
-            "slug": "javascript-zero-to-advanced",
-            "title": "JavaScript From Zero to Advanced",
-            "description": "Go from JavaScript basics to advanced concepts like async programming and DOM manipulation.",
-            "thumbnail": "https://images.unsplash.com/photo-1579468118864-1b9ea3c0db4b?w=800&auto=format&fit=crop",
-            "category": "Frontend",
-            "programming_language": "JavaScript",
-            "technology": "JavaScript",
-            "difficulty": "intermediate",
-            "estimated_duration": 2400,
-            "instructor": "DSir Learning Team",
-            "skills": ["JavaScript", "ES6+", "DOM", "Async/Await", "Fetch API"],
-            "learning_objectives": [
-                "Understand JavaScript fundamentals",
-                "Work with arrays, objects, and functions",
-                "Manipulate the DOM",
-                "Handle asynchronous operations",
-            ],
-            "is_published": True,
-            "modules": [
-                {
-                    "slug": "js-basics",
-                    "title": "JavaScript Basics",
-                    "description": "Variables, types, and control flow in JavaScript.",
-                    "order": 1,
-                    "lessons": [
-                        {
-                            "slug": "variables-and-types",
-                            "title": "Variables and Types",
-                            "lesson_type": "reading",
-                            "position": 1,
-                            "duration_minutes": 20,
-                            "content": {
-                                "body": '# Variables and Types\n\nJavaScript has `let`, `const`, and `var` for declaring variables.\n\n```javascript\nconst name = "Alice";\nlet age = 30;\n```'
-                            },
-                        },
-                    ],
-                },
-                {
-                    "slug": "dom-manipulation",
-                    "title": "DOM Manipulation",
-                    "description": "Interact with web pages using JavaScript.",
-                    "order": 2,
-                    "lessons": [
-                        {
-                            "slug": "selecting-elements",
-                            "title": "Selecting Elements",
-                            "lesson_type": "reading",
-                            "position": 1,
-                            "duration_minutes": 25,
-                            "content": {
-                                "body": "# Selecting Elements\n\nUse JavaScript to select and modify HTML elements.\n\n```javascript\nconst heading = document.querySelector('h1');\nheading.textContent = 'Hello, JavaScript!';\n```"
-                            },
-                        },
-                    ],
-                },
-            ],
-        },
-        {
-            "slug": "fastapi-backend-development",
-            "title": "FastAPI Backend Development",
-            "description": "Build high-performance APIs with Python and FastAPI.",
-            "thumbnail": "https://images.unsplash.com/photo-1555066931-43669f2e7f2a?w=800&auto=format&fit=crop",
-            "category": "Backend",
-            "programming_language": "Python",
-            "technology": "FastAPI",
-            "difficulty": "advanced",
-            "estimated_duration": 2100,
-            "instructor": "DSir Learning Team",
-            "skills": ["FastAPI", "Pydantic", "SQLAlchemy", "Authentication", "API Design"],
-            "learning_objectives": [
-                "Build APIs with FastAPI",
-                "Validate data with Pydantic",
-                "Connect to databases with SQLAlchemy",
-                "Implement authentication and authorization",
-            ],
-            "is_published": True,
-            "modules": [
-                {
-                    "slug": "fastapi-introduction",
-                    "title": "Introduction to FastAPI",
-                    "description": "Get started with FastAPI and Pydantic.",
-                    "order": 1,
-                    "lessons": [
-                        {
-                            "slug": "what-is-fastapi",
-                            "title": "What is FastAPI?",
-                            "lesson_type": "reading",
-                            "position": 1,
-                            "duration_minutes": 15,
-                            "content": {
-                                "body": '# What is FastAPI?\n\nFastAPI is a modern, fast web framework for building APIs with Python.\n\n```python\nfrom fastapi import FastAPI\n\napp = FastAPI()\n\n@app.get("/")\ndef read_root():\n    return {"message": "Hello, World!"}\n```'
-                            },
-                        },
-                    ],
-                },
-                {
-                    "slug": "pydantic-models",
-                    "title": "Pydantic Models",
-                    "description": "Validate and serialize data with Pydantic.",
-                    "order": 2,
-                    "lessons": [
-                        {
-                            "slug": "defining-schemas",
-                            "title": "Defining Schemas",
-                            "lesson_type": "reading",
-                            "position": 1,
-                            "duration_minutes": 30,
-                            "content": {
-                                "body": "# Defining Schemas\n\nPydantic models provide validation and serialization.\n\n```python\nfrom pydantic import BaseModel\n\nclass User(BaseModel):\n    name: str\n    age: int\n```"
-                            },
-                        },
-                    ],
-                },
-            ],
-        },
-        {
-            "slug": "full-stack-web-development",
-            "title": "Full Stack Web Development",
-            "description": "Build complete web applications with Next.js, React, and a backend API.",
-            "thumbnail": "https://images.unsplash.com/photo-1517694712202-14d9537d8fa7?w=800&auto=format&fit=crop",
-            "category": "Full Stack",
-            "programming_language": "TypeScript",
-            "technology": "Next.js",
-            "difficulty": "intermediate",
-            "estimated_duration": 3600,
-            "instructor": "DSir Learning Team",
-            "skills": ["React", "Next.js", "TypeScript", "Tailwind CSS", "API Integration"],
-            "learning_objectives": [
-                "Build frontend interfaces with React",
-                "Create full-stack apps with Next.js",
-                "Integrate frontend with APIs",
-                "Deploy full-stack applications",
-            ],
-            "is_published": True,
-            "modules": [
-                {
-                    "slug": "react-basics",
-                    "title": "React Basics",
-                    "description": "Build UI components with React.",
-                    "order": 1,
-                    "lessons": [
-                        {
-                            "slug": "components-and-props",
-                            "title": "Components and Props",
-                            "lesson_type": "reading",
-                            "position": 1,
-                            "duration_minutes": 25,
-                            "content": {
-                                "body": "# Components and Props\n\nReact applications are built from components.\n\n```jsx\nfunction Welcome({ name }) {\n  return <h1>Hello, {name}</h1>;\n}\n```"
-                            },
-                        },
-                    ],
-                },
-                {
-                    "slug": "nextjs-fundamentals",
-                    "title": "Next.js Fundamentals",
-                    "description": "Build full-stack apps with Next.js.",
-                    "order": 2,
-                    "lessons": [
-                        {
-                            "slug": "pages-and-routes",
-                            "title": "Pages and Routes",
-                            "lesson_type": "reading",
-                            "position": 1,
-                            "duration_minutes": 30,
-                            "content": {
-                                "body": "# Pages and Routes\n\nNext.js uses file-system based routing. Create a file in `pages/` or `app/` to define a route."
-                            },
-                        },
-                    ],
-                },
-            ],
-        },
-    ]
+_CODE_EXAMPLES: dict[str, list[tuple[str, str]]] = {
+    "Python": [
+        ("python", "# Variables and data types\nname = 'Alice'\nage = 30\nprint(f'{name} is {age}')"),
+        ("python", "# Conditional logic\nscore = 85\nif score >= 80:\n    print('Great job!')"),
+        ("python", "# List comprehension\nsquares = [x**2 for x in range(10)]\nprint(squares)"),
+        ("python", "# Dictionary usage\nuser = {'name': 'Alice', 'role': 'admin'}\nprint(user.get('role'))"),
+        ("python", "# Function definition\ndef greet(name):\n    return f'Hello, {name}'\nprint(greet('DSir'))"),
+    ],
+    "HTML/CSS": [
+        ("html", "<h1>Hello World</h1>\n<p>Welcome to DSir.</p>"),
+        ("css", "body {\n  background: #f8fafc;\n  color: #0f172a;\n}"),
+        ("html", "<button class='btn'>Click me</button>"),
+        ("css", ".btn {\n  padding: 0.5rem 1rem;\n  border-radius: 0.375rem;\n}"),
+    ],
+    "JavaScript": [
+        ("javascript", "const greeting = 'Hello DSir';\nconsole.log(greeting);"),
+        ("javascript", "const nums = [1, 2, 3];\nconst doubled = nums.map(n => n * 2);"),
+        ("javascript", "async function fetchData() {\n  const res = await fetch('/api/data');\n  return res.json();\n}"),
+        ("javascript", "document.querySelector('#btn').addEventListener('click', () => {\n  console.log('clicked');\n});"),
+    ],
+    "TypeScript": [
+        ("typescript", "type User = {\n  id: string;\n  email: string;\n};\nconst u: User = { id: '1', email: 'a@b.com' };"),
+        ("typescript", "function add(a: number, b: number): number {\n  return a + b;\n}"),
+        ("typescript", "interface Course {\n  title: string;\n  duration: number;\n}"),
+    ],
+    "React": [
+        ("tsx", "function Welcome({ name }: { name: string }) {\n  return <h1>Hello, {name}</h1>;\n}"),
+        ("tsx", "const [count, setCount] = useState(0);"),
+        ("tsx", "useEffect(() => {\n  console.log('mounted');\n}, []);"),
+    ],
+    "Next.js": [
+        ("tsx", "export default function Page() {\n  return <h1>My Page</h1>;\n}"),
+        ("tsx", "export async function generateStaticParams() {\n  return [{ id: '1' }];\n}"),
+        ("typescript", "export const revalidate = 60;"),
+    ],
+    "FastAPI": [
+        ("python", "from fastapi import FastAPI\napp = FastAPI()\n\n@app.get('/')\ndef read_root():\n    return {'ok': True}"),
+        ("python", "from pydantic import BaseModel\nclass Item(BaseModel):\n    name: str\n    price: float"),
+        ("python", "@app.get('/items/{item_id}')\ndef read_item(item_id: int):\n    return {'item_id': item_id}"),
+    ],
+    "SQL": [
+        ("sql", "SELECT id, title FROM courses WHERE is_published = true;"),
+        ("sql", "SELECT c.title, COUNT(l.id) FROM courses c\nJOIN lessons l ON l.course_id = c.id\nGROUP BY c.title;"),
+        ("sql", "INSERT INTO users (email) VALUES ('alice@example.com');"),
+    ],
+    "PostgreSQL": [
+        ("sql", "CREATE TABLE users (\n  id UUID PRIMARY KEY,\n  email TEXT NOT NULL\n);"),
+        ("sql", "CREATE INDEX idx_users_email ON users(email);"),
+        ("sql", "SELECT * FROM users WHERE email ILIKE '%@example.com';"),
+    ],
+    "Docker": [
+        ("dockerfile", "FROM python:3.11-slim\nWORKDIR /app\nCOPY . .\nCMD ['python', 'app.py']"),
+        ("bash", "docker build -t dsir-api .\ndocker run -p 8000:8000 dsir-api"),
+        ("yaml", "version: '3.9'\nservices:\n  app:\n    image: dsir-api"),
+    ],
+    "Linux": [
+        ("bash", "ls -la /var/log\ncd /home/user"),
+        ("bash", "chmod +x script.sh\n./script.sh"),
+        ("bash", "sudo systemctl restart nginx"),
+    ],
+    "AI Engineering": [
+        ("python", "from openai import OpenAI\nclient = OpenAI()\nresponse = client.chat.completions.create(\n    model='gpt-4o',\n    messages=[{'role': 'user', 'content': 'Hello'}]\n)"),
+        ("python", "# Prompt template\nprompt = f'Answer as an expert: {question}'"),
+        ("python", "# RAG retrieval\nchunks = vector_store.similarity_search(query, k=5)"),
+    ],
+    "Machine Learning": [
+        ("python", "from sklearn.linear_model import LinearRegression\nmodel = LinearRegression()\nmodel.fit(X, y)"),
+        ("python", "from sklearn.model_selection import train_test_split\nX_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)"),
+        ("python", "import pandas as pd\ndf = pd.read_csv('data.csv')\nprint(df.head())"),
+    ],
+    "Git": [
+        ("bash", "git init\ngit add .\ngit commit -m 'initial commit'"),
+        ("bash", "git checkout -b feature/new-ui\ngit push -u origin feature/new-ui"),
+        ("bash", "git pull origin main --rebase"),
+    ],
+}
 
-    for course_data in courses_data:
-        course = Course(
+
+_COURSE_DEFINITIONS: list[dict[str, Any]] = [
+    {
+        "slug": "python-fundamentals",
+        "title": "Python Fundamentals",
+        "description": "Master Python from the ground up. Learn syntax, data structures, functions, object-oriented programming, and build real projects.",
+        "category": "Backend",
+        "programming_language": "Python",
+        "technology": "Python",
+        "difficulty": "beginner",
+        "thumbnail": "https://images.unsplash.com/photo-1526379095098-d400fd843cea?w=800&auto=format&fit=crop",
+        "skills": ["Python", "Variables", "Control Flow", "Functions", "OOP Basics"],
+        "modules": ["Getting Started", "Data Structures", "Control Flow & Functions", "Object-Oriented Programming"],
+    },
+    {
+        "slug": "advanced-python",
+        "title": "Advanced Python",
+        "description": "Dive deeper into decorators, generators, concurrency, metaclasses, and performance optimization in Python.",
+        "category": "Backend",
+        "programming_language": "Python",
+        "technology": "Python",
+        "difficulty": "advanced",
+        "thumbnail": "https://images.unsplash.com/photo-1555066931-43669f2e7f2a?w=800&auto=format&fit=crop",
+        "skills": ["Decorators", "Generators", "Asyncio", "Metaclasses", "Performance"],
+        "modules": ["Decorators & Context Managers", "Iterators & Generators", "Concurrency", "Metaprogramming"],
+    },
+    {
+        "slug": "git-and-github",
+        "title": "Git & GitHub",
+        "description": "Learn version control with Git and collaborate effectively using GitHub.",
+        "category": "DevOps",
+        "programming_language": "Git",
+        "technology": "Git",
+        "difficulty": "beginner",
+        "thumbnail": "https://images.unsplash.com/photo-1618401471353-b98afee0b2fe?w=800&auto=format&fit=crop",
+        "skills": ["Git", "GitHub", "Branching", "Merging", "Pull Requests"],
+        "modules": ["Version Control Basics", "Branching & Merging", "Collaboration", "Advanced Git"],
+    },
+    {
+        "slug": "html-fundamentals",
+        "title": "HTML Fundamentals",
+        "description": "Build semantic web pages with modern HTML5.",
+        "category": "Frontend",
+        "programming_language": "HTML/CSS",
+        "technology": "HTML",
+        "difficulty": "beginner",
+        "thumbnail": "https://images.unsplash.com/photo-1621839673705-661705edf509?w=800&auto=format&fit=crop",
+        "skills": ["HTML5", "Semantic Markup", "Forms", "Accessibility"],
+        "modules": ["HTML Basics", "Forms & Inputs", "Semantic HTML", "Accessibility"],
+    },
+    {
+        "slug": "css-mastery",
+        "title": "CSS Mastery",
+        "description": "Style beautiful, responsive websites with CSS3, Flexbox, Grid, and modern techniques.",
+        "category": "Frontend",
+        "programming_language": "HTML/CSS",
+        "technology": "CSS",
+        "difficulty": "beginner",
+        "thumbnail": "https://images.unsplash.com/photo-1507721999472-758ed6d558b5?w=800&auto=format&fit=crop",
+        "skills": ["CSS3", "Flexbox", "Grid", "Responsive Design", "Animations"],
+        "modules": ["Selectors & the Box Model", "Flexbox", "Grid Layout", "Responsive Design"],
+    },
+    {
+        "slug": "javascript-fundamentals",
+        "title": "JavaScript Fundamentals",
+        "description": "Learn modern JavaScript from variables to async programming.",
+        "category": "Frontend",
+        "programming_language": "JavaScript",
+        "technology": "JavaScript",
+        "difficulty": "beginner",
+        "thumbnail": "https://images.unsplash.com/photo-1579468118864-1b9ea3c0db4b?w=800&auto=format&fit=crop",
+        "skills": ["JavaScript", "ES6+", "DOM", "Async/Await", "Fetch"],
+        "modules": ["Variables & Types", "Functions & Scope", "DOM Manipulation", "Asynchronous JS"],
+    },
+    {
+        "slug": "typescript-essentials",
+        "title": "TypeScript Essentials",
+        "description": "Add static typing to your JavaScript projects with TypeScript.",
+        "category": "Frontend",
+        "programming_language": "TypeScript",
+        "technology": "TypeScript",
+        "difficulty": "intermediate",
+        "thumbnail": "https://images.unsplash.com/photo-1516116213044-8e1b59f4a333?w=800&auto=format&fit=crop",
+        "skills": ["TypeScript", "Types", "Interfaces", "Generics", "TS Config"],
+        "modules": ["Types & Interfaces", "Functions & Objects", "Generics", "Advanced Types"],
+    },
+    {
+        "slug": "react-fundamentals",
+        "title": "React Fundamentals",
+        "description": "Build interactive UIs with React hooks, components, and modern patterns.",
+        "category": "Frontend",
+        "programming_language": "JavaScript",
+        "technology": "React",
+        "difficulty": "intermediate",
+        "thumbnail": "https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=800&auto=format&fit=crop",
+        "skills": ["React", "Hooks", "Components", "State", "Effects"],
+        "modules": ["Components & JSX", "State & Events", "Hooks", "Patterns"],
+    },
+    {
+        "slug": "nextjs-mastery",
+        "title": "Next.js Mastery",
+        "description": "Create production-grade full-stack apps with Next.js App Router.",
+        "category": "Full Stack",
+        "programming_language": "TypeScript",
+        "technology": "Next.js",
+        "difficulty": "intermediate",
+        "thumbnail": "https://images.unsplash.com/photo-1517694712202-14d9537d8fa7?w=800&auto=format&fit=crop",
+        "skills": ["Next.js", "App Router", "SSR", "API Routes", "Deployment"],
+        "modules": ["App Router", "Routing & Layouts", "Data Fetching", "Deployment"],
+    },
+    {
+        "slug": "fastapi-mastery",
+        "title": "FastAPI Mastery",
+        "description": "Build high-performance Python APIs with FastAPI, Pydantic, and SQLAlchemy.",
+        "category": "Backend",
+        "programming_language": "Python",
+        "technology": "FastAPI",
+        "difficulty": "intermediate",
+        "thumbnail": "https://images.unsplash.com/photo-1555949963-ff6271ac2b2a?w=800&auto=format&fit=crop",
+        "skills": ["FastAPI", "Pydantic", "SQLAlchemy", "Dependency Injection", "Async"],
+        "modules": ["Routing & Schemas", "Databases", "Authentication", "Testing & Deployment"],
+    },
+    {
+        "slug": "sql-fundamentals",
+        "title": "SQL Fundamentals",
+        "description": "Write powerful queries and design relational databases with SQL.",
+        "category": "Backend",
+        "programming_language": "SQL",
+        "technology": "SQL",
+        "difficulty": "beginner",
+        "thumbnail": "https://images.unsplash.com/photo-1544383835-bda4e3a9d4d5?w=800&auto=format&fit=crop",
+        "skills": ["SQL", "Queries", "Joins", "Aggregations", "Indexes"],
+        "modules": ["SELECT & Filtering", "Joins", "Aggregations", "Indexes & Optimization"],
+    },
+    {
+        "slug": "postgresql-mastery",
+        "title": "PostgreSQL Mastery",
+        "description": "Master PostgreSQL: advanced queries, indexing, full-text search, and JSONB.",
+        "category": "Backend",
+        "programming_language": "SQL",
+        "technology": "PostgreSQL",
+        "difficulty": "advanced",
+        "thumbnail": "https://images.unsplash.com/photo-1558494949-efc5278e9e4a?w=800&auto=format&fit=crop",
+        "skills": ["PostgreSQL", "JSONB", "Indexes", "Full-Text Search", "Window Functions"],
+        "modules": ["Advanced Queries", "Indexing", "JSONB", "Extensions"],
+    },
+    {
+        "slug": "docker-essentials",
+        "title": "Docker Essentials",
+        "description": "Containerize applications and orchestrate services with Docker.",
+        "category": "DevOps",
+        "programming_language": "Docker",
+        "technology": "Docker",
+        "difficulty": "intermediate",
+        "thumbnail": "https://images.unsplash.com/photo-1605745341112-85968b19330b?w=800&auto=format&fit=crop",
+        "skills": ["Docker", "Containers", "Images", "Docker Compose", "Networking"],
+        "modules": ["Containers & Images", "Dockerfiles", "Docker Compose", "Networking"],
+    },
+    {
+        "slug": "linux-fundamentals",
+        "title": "Linux Fundamentals",
+        "description": "Navigate the command line and manage Linux servers with confidence.",
+        "category": "DevOps",
+        "programming_language": "Linux",
+        "technology": "Linux",
+        "difficulty": "beginner",
+        "thumbnail": "https://images.unsplash.com/photo-1516251193000-18f0d5a583a5?w=800&auto=format&fit=crop",
+        "skills": ["Linux", "CLI", "Permissions", "Processes", "Shell Scripting"],
+        "modules": ["Command Line Basics", "File System", "Users & Permissions", "Shell Scripting"],
+    },
+    {
+        "slug": "ai-engineering",
+        "title": "AI Engineering",
+        "description": "Build production AI applications with LLMs, embeddings, and agents.",
+        "category": "AI",
+        "programming_language": "Python",
+        "technology": "AI",
+        "difficulty": "advanced",
+        "thumbnail": "https://images.unsplash.com/photo-1677442136019-21780ecbd0ac?w=800&auto=format&fit=crop",
+        "skills": ["LLMs", "Prompt Engineering", "RAG", "Embeddings", "Agents"],
+        "modules": ["LLM Basics", "Prompt Engineering", "RAG", "Agents & Tools"],
+    },
+    {
+        "slug": "machine-learning-fundamentals",
+        "title": "Machine Learning Fundamentals",
+        "description": "Understand the foundations of machine learning and train models with Python.",
+        "category": "AI",
+        "programming_language": "Python",
+        "technology": "Machine Learning",
+        "difficulty": "intermediate",
+        "thumbnail": "https://images.unsplash.com/photo-1551288049-b40f3aef5d76?w=800&auto=format&fit=crop",
+        "skills": ["ML", "Scikit-Learn", "Pandas", "Regression", "Classification"],
+        "modules": ["ML Workflow", "Regression", "Classification", "Model Evaluation"],
+    },
+]
+
+
+_LEARNING_OBJECTIVES: list[str] = [
+    "Understand core concepts and terminology",
+    "Apply best practices through hands-on examples",
+    "Build real-world projects and exercises",
+    "Prepare for advanced topics and production work",
+]
+
+
+def _to_slug(text: str) -> str:
+    return text.lower().replace(" ", "-").replace(".", "").replace("&", "and")[:50]
+
+
+def _build_lesson_body(
+    course_title: str,
+    module_title: str,
+    lesson_title: str,
+    language: str,
+    lesson_index: int,
+) -> str:
+    examples = _CODE_EXAMPLES.get(language, _CODE_EXAMPLES["Python"])
+    _, code = examples[lesson_index % len(examples)]
+    return (
+        f"# {lesson_title}\n\n"
+        f"In the **{course_title}** course, this lesson is part of the **{module_title}** module. "
+        f"Here we explore **{lesson_title}** and see how it fits into real-world development.\n\n"
+        f"## Key Takeaways\n\n"
+        f"- Understand the purpose of {lesson_title.lower()}.\n"
+        f"- Recognize common patterns and pitfalls.\n"
+        f"- Practice with the code example below.\n\n"
+        f"## Example\n\n"
+        f"```{language}\n{code}\n```\n\n"
+        f"Try modifying the example and running it yourself to reinforce what you learned."
+    )
+
+
+def _build_module_description(module_title: str, course_title: str) -> str:
+    return f"{module_title} in {course_title}. Learn through guided lessons, examples, and practice exercises."
+
+
+def _seed_course(db: AsyncSession, course_data: dict[str, Any]) -> Course:
+    modules = course_data.pop("modules")
+    language = course_data["programming_language"]
+    course = Course(
+        id=uuid.uuid4(),
+        **course_data,
+        estimated_duration=0,
+        instructor=course_data.get("instructor", "DSir Learning Team"),
+        learning_objectives=_LEARNING_OBJECTIVES,
+        is_published=True,
+    )
+    db.add(course)
+    db.flush()
+
+    total_duration = 0
+    for module_index, module_title in enumerate(modules, start=1):
+        concept = Concept(
             id=uuid.uuid4(),
-            slug=course_data["slug"],
-            title=course_data["title"],
-            description=course_data["description"],
-            thumbnail=course_data["thumbnail"],
-            category=course_data["category"],
-            programming_language=course_data["programming_language"],
-            technology=course_data["technology"],
-            difficulty=course_data["difficulty"],
-            estimated_duration=course_data["estimated_duration"],
-            instructor=course_data["instructor"],
-            skills=course_data["skills"],
-            learning_objectives=course_data["learning_objectives"],
-            is_published=course_data["is_published"],
+            course_id=course.id,
+            slug=_to_slug(module_title),
+            title=module_title,
+            description=_build_module_description(module_title, course.title),
+            order=module_index,
+            prerequisites=[],
         )
-        db.add(course)
-        await db.flush()
+        db.add(concept)
+        db.flush()
 
-        for module_data in course_data["modules"]:
-            concept = Concept(
+        for lesson_index in range(1, 4):
+            lesson_title = f"{module_title} - Part {lesson_index}"
+            duration = 15 + (lesson_index * 5)
+            total_duration += duration
+            lesson = Lesson(
                 id=uuid.uuid4(),
-                course_id=course.id,
-                slug=module_data["slug"],
-                title=module_data["title"],
-                description=module_data["description"],
-                order=module_data["order"],
-                prerequisites=[],
+                concept_id=concept.id,
+                slug=f"{_to_slug(module_title)}-part-{lesson_index}",
+                title=lesson_title,
+                content={
+                    "body": _build_lesson_body(
+                        course.title,
+                        module_title,
+                        lesson_title,
+                        language,
+                        lesson_index - 1,
+                    )
+                },
+                lesson_type="reading",
+                position=lesson_index,
+                duration_minutes=duration,
+                meta={},
             )
-            db.add(concept)
-            await db.flush()
+            db.add(lesson)
 
-            for lesson_data in module_data["lessons"]:
-                lesson = Lesson(
-                    id=uuid.uuid4(),
-                    concept_id=concept.id,
-                    slug=lesson_data["slug"],
-                    title=lesson_data["title"],
-                    content=lesson_data["content"],
-                    lesson_type=lesson_data["lesson_type"],
-                    position=lesson_data["position"],
-                    duration_minutes=lesson_data["duration_minutes"],
-                    meta={},
-                )
-                db.add(lesson)
+    course.estimated_duration = total_duration
+    return course
+
+
+async def seed_courses(db: AsyncSession) -> None:
+    for data in _COURSE_DEFINITIONS:
+        await _seed_course(db, data)
 
 
 async def seed_roadmap(db: AsyncSession, course_ids: list[uuid.UUID]) -> None:

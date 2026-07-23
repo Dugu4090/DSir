@@ -3,7 +3,7 @@ from src.models.audit import AuditLog
 from src.models.content import Concept, Course, Lesson, Roadmap, RoadmapCourse
 from src.models.execution import ExecutionHistory
 from src.models.knowledge import KnowledgeChunk
-from src.models.learning import ConceptMastery, Enrollment, LessonProgress, UserActivity
+from src.models.learning import Bookmark, ConceptMastery, Enrollment, LessonProgress, UserActivity
 from src.models.revision import RevisionProblemQueue, RevisionSchedule, RevisionSession
 from src.models.user import RefreshToken, User, UserProfile, UserRole
 
@@ -21,6 +21,7 @@ __all__ = [
     "LessonProgress",
     "ConceptMastery",
     "UserActivity",
+    "Bookmark",
     "Submission",
     "Project",
     "ProjectSubmission",
