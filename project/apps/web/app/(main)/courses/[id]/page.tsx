@@ -17,6 +17,7 @@ import {
   User,
 } from "lucide-react";
 import { createEnrollment, fetchCourseDetail } from "@/lib/api";
+import { useAuthStore } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { ErrorMessage } from "@/components/ui/error-message";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -33,6 +34,7 @@ function formatDifficulty(difficulty: string) {
 export default function CourseDetailPage() {
   const { id } = useParams<{ id: string }>();
   const queryClient = useQueryClient();
+  const { isAuthenticated } = useAuthStore();
   const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set());
 
   const { data, isLoading, error, refetch } = useQuery({
@@ -136,7 +138,7 @@ export default function CourseDetailPage() {
                   <Play className="h-5 w-5" />
                   {progress.progress_percent > 0 ? "Continue Learning" : "Start Learning"}
                 </Link>
-              ) : (
+              ) : isAuthenticated ? (
                 <Button
                   onClick={() => enrollMutation.mutate()}
                   disabled={enrollMutation.isPending}
@@ -145,6 +147,13 @@ export default function CourseDetailPage() {
                 >
                   {enrollMutation.isPending ? "Enrolling..." : "Enroll Now"}
                 </Button>
+              ) : (
+                <Link
+                  href="/login"
+                  className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white transition hover:bg-blue-700"
+                >
+                  Sign in to Enroll
+                </Link>
               )}
               {progress.progress_percent > 0 && (
                 <div className="flex items-center gap-3 rounded-xl border border-white/20 bg-white/10 px-4 py-2 backdrop-blur-sm">
@@ -280,15 +289,23 @@ export default function CourseDetailPage() {
                 {progress.progress_percent}% complete
               </p>
             </div>
-            {!enrollment && (
-              <Button
-                onClick={() => enrollMutation.mutate()}
-                disabled={enrollMutation.isPending}
-                className="mt-6 w-full"
-              >
-                {enrollMutation.isPending ? "Enrolling..." : "Enroll Now"}
-              </Button>
-            )}
+            {!enrollment &&
+              (isAuthenticated ? (
+                <Button
+                  onClick={() => enrollMutation.mutate()}
+                  disabled={enrollMutation.isPending}
+                  className="mt-6 w-full"
+                >
+                  {enrollMutation.isPending ? "Enrolling..." : "Enroll Now"}
+                </Button>
+              ) : (
+                <Link
+                  href="/login"
+                  className="mt-6 flex w-full items-center justify-center rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
+                >
+                  Sign in to Enroll
+                </Link>
+              ))}
           </section>
 
           <section className="rounded-2xl border border-slate-200 bg-gradient-to-br from-blue-50 to-violet-50 p-6 dark:border-slate-700 dark:from-slate-900 dark:to-slate-900">

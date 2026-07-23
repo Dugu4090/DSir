@@ -31,7 +31,9 @@ async def test_search_for_user(rag_service: RAGService, db_session: AsyncSession
     from src.models.user import User
 
     user = User(email="rag@example.com", hashed_password="secret")
-    course = Course(slug="python", title="Python", technology="python")
+    course = Course(
+        slug="python", title="Python", technology="python", programming_language="python", difficulty="beginner"
+    )
     db_session.add_all([user, course])
     await db_session.flush()
 

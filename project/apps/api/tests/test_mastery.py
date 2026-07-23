@@ -14,7 +14,9 @@ def mastery_engine(db_session: AsyncSession) -> MasteryEngine:
 @pytest.mark.asyncio
 async def test_record_correct_attempt(mastery_engine: MasteryEngine, db_session: AsyncSession) -> None:
     user = User(email="learner@example.com", hashed_password="secret")
-    course = Course(slug="python", title="Python", technology="python")
+    course = Course(
+        slug="python", title="Python", technology="python", programming_language="python", difficulty="beginner"
+    )
     db_session.add_all([user, course])
     await db_session.flush()
 

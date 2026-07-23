@@ -1,5 +1,6 @@
 import asyncio
 import uuid
+from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -8,7 +9,7 @@ from src.models.content import Concept, Course, Lesson, Roadmap, RoadmapCourse
 
 
 async def seed_courses(db: AsyncSession) -> None:
-    courses_data = [
+    courses_data: list[dict[str, Any]] = [
         {
             "slug": "python-fundamentals",
             "title": "Python Fundamentals",

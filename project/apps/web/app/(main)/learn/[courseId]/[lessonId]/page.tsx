@@ -165,8 +165,6 @@ export default function LearnPage() {
       ? (lesson.content as Record<string, unknown>)
       : { body: String(lesson.content || "") };
 
-  const currentLesson = lesson;
-
   return (
     <div className="flex h-[calc(100vh-7rem)] flex-col gap-4 lg:flex-row">
       {/* Sidebar */}

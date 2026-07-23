@@ -5,9 +5,8 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
-from src.core.dependencies import get_current_active_user, require_content_creator
+from src.core.dependencies import get_current_user_optional, require_content_creator
 from src.db.session import get_db
 from src.models.content import Concept, Course, Lesson
 from src.models.learning import Enrollment, LessonProgress
@@ -84,10 +83,10 @@ async def get_course(course_id: UUID, db: AsyncSession = Depends(get_db)) -> Cou
 @router.get("/{course_id}/detail", response_model=dict)
 async def get_course_detail(
     course_id: UUID,
-    current_user: User = Depends(get_current_active_user),
+    current_user: User | None = Depends(get_current_user_optional),
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, object]:
-    result = await db.execute(select(Course).where(Course.id == course_id).options(selectinload(Course.concepts)))
+    result = await db.execute(select(Course).where(Course.id == course_id))
     course = result.unique().scalar_one_or_none()
     if course is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Course not found")
@@ -107,23 +106,25 @@ async def get_course_detail(
     for lesson in lessons:
         lessons_by_concept.setdefault(lesson.concept_id, []).append(lesson)
 
-    # Get progress
-    progress_result = await db.execute(
-        select(LessonProgress.lesson_id).where(
-            LessonProgress.user_id == current_user.id,
-            LessonProgress.is_completed.is_(True),
+    # Get progress and enrollment for authenticated users
+    completed_lesson_ids: set[UUID] = set()
+    enrollment: Enrollment | None = None
+    if current_user is not None:
+        progress_result = await db.execute(
+            select(LessonProgress.lesson_id).where(
+                LessonProgress.user_id == current_user.id,
+                LessonProgress.is_completed.is_(True),
+            )
         )
-    )
-    completed_lesson_ids = {row[0] for row in progress_result.all()}
+        completed_lesson_ids = {row[0] for row in progress_result.all()}
 
-    # Enrollment
-    enrollment_result = await db.execute(
-        select(Enrollment).where(
-            Enrollment.user_id == current_user.id,
-            Enrollment.course_id == course_id,
+        enrollment_result = await db.execute(
+            select(Enrollment).where(
+                Enrollment.user_id == current_user.id,
+                Enrollment.course_id == course_id,
+            )
         )
-    )
-    enrollment = enrollment_result.scalar_one_or_none()
+        enrollment = enrollment_result.scalar_one_or_none()
 
     modules_out = []
     total_lessons = 0

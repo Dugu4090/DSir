@@ -12,7 +12,9 @@ def knowledge_graph(db_session: AsyncSession) -> KnowledgeGraph:
 
 @pytest.mark.asyncio
 async def test_topological_sort(knowledge_graph: KnowledgeGraph, db_session: AsyncSession) -> None:
-    course = Course(slug="python", title="Python", technology="python")
+    course = Course(
+        slug="python", title="Python", technology="python", programming_language="python", difficulty="beginner"
+    )
     db_session.add(course)
     await db_session.flush()
 

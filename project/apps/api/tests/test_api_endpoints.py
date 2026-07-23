@@ -49,6 +49,8 @@ async def test_list_courses(auth_client: TestClient, db_session: AsyncSession) -
             title="Python",
             technology="python",
             is_published=True,
+            programming_language="python",
+            difficulty="beginner",
         )
     )
     await db_session.flush()
@@ -69,6 +71,8 @@ async def test_get_course(auth_client: TestClient, db_session: AsyncSession) -> 
             title="Python",
             technology="python",
             is_published=True,
+            programming_language="python",
+            difficulty="beginner",
         )
     )
     await db_session.flush()
@@ -80,7 +84,17 @@ async def test_get_course(auth_client: TestClient, db_session: AsyncSession) -> 
 
 async def test_list_course_concepts(auth_client: TestClient, db_session: AsyncSession) -> None:
     course_id = uuid4()
-    db_session.add(Course(id=course_id, slug="python", title="Python", technology="python", is_published=True))
+    db_session.add(
+        Course(
+            id=course_id,
+            slug="python",
+            title="Python",
+            technology="python",
+            programming_language="python",
+            is_published=True,
+            difficulty="beginner",
+        )
+    )
     await db_session.flush()
 
     db_session.add(Concept(course_id=course_id, slug="variables", title="Variables"))
@@ -95,7 +109,17 @@ async def test_list_course_concepts(auth_client: TestClient, db_session: AsyncSe
 
 async def test_get_concept_by_slug(auth_client: TestClient, db_session: AsyncSession) -> None:
     course_id = uuid4()
-    db_session.add(Course(id=course_id, slug="python", title="Python", technology="python", is_published=True))
+    db_session.add(
+        Course(
+            id=course_id,
+            slug="python",
+            title="Python",
+            technology="python",
+            programming_language="python",
+            is_published=True,
+            difficulty="beginner",
+        )
+    )
     await db_session.flush()
 
     db_session.add(Concept(course_id=course_id, slug="variables", title="Variables"))
@@ -108,7 +132,17 @@ async def test_get_concept_by_slug(auth_client: TestClient, db_session: AsyncSes
 
 async def test_create_enrollment(auth_client: TestClient, db_session: AsyncSession) -> None:
     course_id = uuid4()
-    db_session.add(Course(id=course_id, slug="python", title="Python", technology="python", is_published=True))
+    db_session.add(
+        Course(
+            id=course_id,
+            slug="python",
+            title="Python",
+            technology="python",
+            programming_language="python",
+            is_published=True,
+            difficulty="beginner",
+        )
+    )
     await db_session.flush()
 
     response = auth_client.post(
@@ -136,7 +170,17 @@ async def test_create_submission(auth_client: TestClient, db_session: AsyncSessi
 async def test_record_mastery(auth_client: TestClient, db_session: AsyncSession) -> None:
     course_id = uuid4()
     concept_id = uuid4()
-    db_session.add(Course(id=course_id, slug="python", title="Python", technology="python", is_published=True))
+    db_session.add(
+        Course(
+            id=course_id,
+            slug="python",
+            title="Python",
+            technology="python",
+            programming_language="python",
+            is_published=True,
+            difficulty="beginner",
+        )
+    )
     db_session.add(Concept(id=concept_id, course_id=course_id, slug="variables", title="Variables"))
     await db_session.flush()
 
@@ -150,7 +194,17 @@ async def test_record_mastery(auth_client: TestClient, db_session: AsyncSession)
 async def test_revision_submit_review(auth_client: TestClient, db_session: AsyncSession) -> None:
     course_id = uuid4()
     concept_id = uuid4()
-    db_session.add(Course(id=course_id, slug="python", title="Python", technology="python", is_published=True))
+    db_session.add(
+        Course(
+            id=course_id,
+            slug="python",
+            title="Python",
+            technology="python",
+            programming_language="python",
+            is_published=True,
+            difficulty="beginner",
+        )
+    )
     db_session.add(Concept(id=concept_id, course_id=course_id, slug="variables", title="Variables"))
     await db_session.flush()
 
@@ -199,7 +253,17 @@ def test_get_profile_not_found(auth_client: TestClient) -> None:
 async def test_list_lessons(auth_client: TestClient, db_session: AsyncSession) -> None:
     course_id = uuid4()
     concept_id = uuid4()
-    db_session.add(Course(id=course_id, slug="python", title="Python", technology="python", is_published=True))
+    db_session.add(
+        Course(
+            id=course_id,
+            slug="python",
+            title="Python",
+            technology="python",
+            programming_language="python",
+            is_published=True,
+            difficulty="beginner",
+        )
+    )
     db_session.add(Concept(id=concept_id, course_id=course_id, slug="variables", title="Variables"))
     db_session.add(
         Lesson(
@@ -224,7 +288,17 @@ async def test_get_lesson(auth_client: TestClient, db_session: AsyncSession) -> 
     lesson_id = uuid4()
     concept_id = uuid4()
     course_id = uuid4()
-    db_session.add(Course(id=course_id, slug="python", title="Python", technology="python", is_published=True))
+    db_session.add(
+        Course(
+            id=course_id,
+            slug="python",
+            title="Python",
+            technology="python",
+            programming_language="python",
+            is_published=True,
+            difficulty="beginner",
+        )
+    )
     db_session.add(Concept(id=concept_id, course_id=course_id, slug="variables", title="Variables"))
     db_session.add(
         Lesson(
@@ -254,7 +328,17 @@ async def test_create_roadmap(auth_client: TestClient, db_session: AsyncSession)
 
 async def test_list_projects(auth_client: TestClient, db_session: AsyncSession) -> None:
     course_id = uuid4()
-    db_session.add(Course(id=course_id, slug="python", title="Python", technology="python", is_published=True))
+    db_session.add(
+        Course(
+            id=course_id,
+            slug="python",
+            title="Python",
+            technology="python",
+            programming_language="python",
+            is_published=True,
+            difficulty="beginner",
+        )
+    )
     db_session.add(
         Project(
             id=uuid4(),
