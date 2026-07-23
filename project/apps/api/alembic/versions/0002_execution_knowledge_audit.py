@@ -15,7 +15,7 @@ from sqlalchemy.dialects import postgresql
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision: str = "0002_add_execution_knowledge_audit_and_rename_meta"
+revision: str = "0002_execution_knowledge_audit"
 down_revision: str | None = "0001_initial"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
@@ -105,6 +105,7 @@ def upgrade() -> None:
         ["embedding"],
         postgresql_using="hnsw",
         postgresql_with={"m": 16, "ef_construction": 64},
+        postgresql_ops={"embedding": "vector_cosine_ops"},
     )
 
 
