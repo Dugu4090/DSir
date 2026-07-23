@@ -7,8 +7,10 @@ from src.api.v1 import (
     courses,
     enrollments,
     execution,
+    gamification,
     lessons,
     mastery,
+    notes,
     profiles,
     projects,
     rag,
@@ -24,7 +26,9 @@ api_router = APIRouter()
 api_router.include_router(auth.router, prefix="/auth", tags=["auth"])
 api_router.include_router(users.router, prefix="/users", tags=["users"])
 api_router.include_router(profiles.router, prefix="/profiles", tags=["profiles"])
+api_router.include_router(gamification.router, prefix="/gamification", tags=["gamification"])
 api_router.include_router(bookmarks.router, prefix="/bookmarks", tags=["bookmarks"])
+api_router.include_router(notes.router, prefix="/notes", tags=["notes"])
 api_router.include_router(courses.router, prefix="/courses", tags=["courses"])
 api_router.include_router(roadmaps.router, prefix="/roadmaps", tags=["roadmaps"])
 api_router.include_router(enrollments.router, prefix="/enrollments", tags=["enrollments"])

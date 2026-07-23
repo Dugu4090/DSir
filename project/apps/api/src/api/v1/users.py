@@ -13,7 +13,7 @@ from src.db.session import get_db
 from src.models.content import Course
 from src.models.learning import UserActivity
 from src.models.user import User, UserRole
-from src.schemas.common import PaginatedResponse, PaginationParams
+from src.schemas.common import ActivityCreate, PaginatedResponse, PaginationParams
 from src.schemas.user import UserCreate, UserRead
 
 router = APIRouter()
@@ -91,6 +91,7 @@ async def add_role(
 
 @router.get("/me/activity", response_model=PaginatedResponse)
 async def get_my_activity(
+    pagination: PaginationParams = Depends(),
     current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db),
 ) -> PaginatedResponse:
@@ -102,7 +103,9 @@ async def get_my_activity(
     total_result = await db.execute(query)
     total = len(total_result.scalars().all())
 
-    result = await db.execute(query.limit(20))
+    result = await db.execute(
+        query.offset((pagination.page - 1) * pagination.per_page).limit(pagination.per_page)
+    )
     activities = result.scalars().all()
     return PaginatedResponse(
         items=[
@@ -117,27 +120,24 @@ async def get_my_activity(
             for activity in activities
         ],
         total=total,
-        page=1,
-        per_page=20,
-        pages=(total + 20 - 1) // 20,
+        page=pagination.page,
+        per_page=pagination.per_page,
+        pages=(total + pagination.per_page - 1) // pagination.per_page,
     )
 
 
 @router.post("/me/activity", status_code=status.HTTP_204_NO_CONTENT)
 async def log_my_activity(
-    activity_type: str,
-    entity_type: str | None = None,
-    entity_id: UUID | None = None,
-    meta: dict | None = None,
+    data: ActivityCreate,
     current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db),
 ) -> None:
     activity = UserActivity(
         user_id=current_user.id,
-        activity_type=activity_type,
-        entity_type=entity_type,
-        entity_id=entity_id,
-        meta=meta or {},
+        activity_type=data.activity_type,
+        entity_type=data.entity_type,
+        entity_id=data.entity_id,
+        meta=data.meta or {},
     )
     db.add(activity)
     await db.commit()

@@ -282,12 +282,14 @@ _COURSE_DEFINITIONS: list[dict[str, Any]] = [
 ]
 
 
-_LEARNING_OBJECTIVES: list[str] = [
-    "Understand core concepts and terminology",
-    "Apply best practices through hands-on examples",
-    "Build real-world projects and exercises",
-    "Prepare for advanced topics and production work",
-]
+def _build_objectives(course_title: str, module_titles: list[str]) -> list[str]:
+    first_module = module_titles[0] if module_titles else "the fundamentals"
+    return [
+        f"Understand core concepts and terminology in {course_title}",
+        f"Apply practical skills from {first_module} through guided examples",
+        f"Build real-world projects and exercises with {course_title}",
+        f"Prepare for advanced topics and production-ready {course_title} work",
+    ]
 
 
 def _to_slug(text: str) -> str:
@@ -324,12 +326,13 @@ def _build_module_description(module_title: str, course_title: str) -> str:
 def _seed_course(db: AsyncSession, course_data: dict[str, Any]) -> Course:
     modules = course_data.pop("modules")
     language = course_data["programming_language"]
+    module_titles: list[str] = modules
     course = Course(
         id=uuid.uuid4(),
         **course_data,
         estimated_duration=0,
         instructor=course_data.get("instructor", "DSir Learning Team"),
-        learning_objectives=_LEARNING_OBJECTIVES,
+        learning_objectives=course_data.get("learning_objectives") or _build_objectives(course_data["title"], module_titles),
         is_published=True,
     )
     db.add(course)

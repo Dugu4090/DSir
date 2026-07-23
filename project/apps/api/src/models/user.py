@@ -47,6 +47,11 @@ class UserProfile(Base):
     preferred_language: Mapped[str] = mapped_column(String(10), default="en")
     onboarding_completed: Mapped[bool] = mapped_column(Boolean, default=False)
     preferences: Mapped[dict[str, Any]] = mapped_column(JSONType, default=dict)
+    # Gamification fields
+    xp: Mapped[int] = mapped_column(Integer, default=0)
+    current_streak: Mapped[int] = mapped_column(Integer, default=0)
+    longest_streak: Mapped[int] = mapped_column(Integer, default=0)
+    last_activity_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     user: Mapped[User] = relationship("User", back_populates="profile")
 

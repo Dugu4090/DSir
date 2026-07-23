@@ -331,8 +331,55 @@ export interface RecentCourse {
   viewed_at: string;
 }
 
-export async function fetchBookmarks(params?: { page?: number; per_page?: number }) {
-  const res = await apiClient.get<PaginatedResponse<Bookmark>>("/bookmarks/", { params });
+export interface UserStats {
+  xp: number;
+  current_streak: number;
+  longest_streak: number;
+  last_activity_date: string | null;
+  daily_goal_minutes: number;
+  lessons_completed: number;
+  courses_completed: number;
+  weekly_minutes: Array<[string, number]>;
+}
+
+export interface UserProfile {
+  user_id: string;
+  timezone: string | null;
+  daily_goal_minutes: number;
+  preferred_language: string;
+  onboarding_completed: boolean;
+  preferences: Record<string, unknown>;
+}
+
+export interface Achievement {
+  id: string;
+  slug: string;
+  title: string;
+  description: string | null;
+  icon: string | null;
+  xp_reward: number;
+  created_at: string;
+}
+
+export interface UserAchievement {
+  id: string;
+  user_id: string;
+  achievement_id: string;
+  earned_at: string;
+  achievement: Achievement;
+}
+
+export interface Note {
+  id: string;
+  user_id: string;
+  lesson_id: string;
+  content: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export async function fetchBookmarks() {
+  const res = await apiClient.get<PaginatedResponse<Bookmark>>("/bookmarks/");
   return res.data;
 }
 
@@ -351,9 +398,79 @@ export async function fetchRecentCourses() {
 }
 
 export async function logActivity(activityType: string, entityType?: string, entityId?: string) {
-  await apiClient.post("/users/me/activity", undefined, {
-    params: { activity_type: activityType, entity_type: entityType, entity_id: entityId },
+  await apiClient.post("/users/me/activity", {
+    activity_type: activityType,
+    entity_type: entityType,
+    entity_id: entityId,
   });
+}
+
+export async function changePassword(data: { current_password: string; new_password: string }) {
+  await apiClient.post("/auth/change-password", data);
+}
+
+export async function deleteAccount() {
+  await apiClient.delete("/auth/me");
+}
+
+export async function fetchProfile() {
+  const res = await apiClient.get<UserProfile>("/profiles/me");
+  return res.data;
+}
+
+export async function updateProfile(data: {
+  full_name?: string;
+  timezone?: string;
+  daily_goal_minutes?: number;
+  preferred_language?: string;
+}) {
+  const res = await apiClient.put<UserProfile>("/profiles/me", data);
+  return res.data;
+}
+
+// Gamification
+export async function fetchUserStats() {
+  const res = await apiClient.get<UserStats>("/gamification/me/stats");
+  return res.data;
+}
+
+export async function fetchUserAchievements() {
+  const res = await apiClient.get<PaginatedResponse<UserAchievement>>(
+    "/gamification/me/achievements"
+  );
+  return res.data;
+}
+
+export async function fetchRecommendations() {
+  const res = await apiClient.get<PaginatedResponse<Course>>(
+    "/gamification/recommendations"
+  );
+  return res.data;
+}
+
+// Notes
+export async function fetchNotes() {
+  const res = await apiClient.get<PaginatedResponse<Note>>("/notes/");
+  return res.data;
+}
+
+export async function fetchNoteForLesson(lessonId: string) {
+  const res = await apiClient.get<Note | null>(`/notes/lesson/${lessonId}`);
+  return res.data;
+}
+
+export async function createNote(data: { lesson_id: string; content: string }) {
+  const res = await apiClient.post<Note>("/notes/", data);
+  return res.data;
+}
+
+export async function updateNote(noteId: string, data: { content: string }) {
+  const res = await apiClient.put<Note>(`/notes/${noteId}`, data);
+  return res.data;
+}
+
+export async function deleteNote(noteId: string) {
+  await apiClient.delete(`/notes/${noteId}`);
 }
 
 // AI

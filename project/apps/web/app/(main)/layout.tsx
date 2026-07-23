@@ -20,11 +20,18 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     window.location.href = "/login";
   };
 
+  const pageTitle =
+    navigation.find((item) => pathname.startsWith(item.href))?.name ?? "DSir";
+
   return (
-    <div className="flex h-screen bg-slate-50 dark:bg-slate-950">
-      <aside className="hidden w-64 flex-col border-r border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900 md:flex">
-        <div className="flex h-16 items-center border-b border-slate-200 px-6 dark:border-slate-700">
-          <Link href="/dashboard" className="text-xl font-bold text-blue-600 dark:text-blue-400">
+    <div className="flex h-screen bg-background">
+      {/* Desktop sidebar */}
+      <aside className="hidden w-64 flex-col border-r border-border bg-card md:flex">
+        <div className="flex h-16 items-center border-b border-border px-6">
+          <Link href="/dashboard" className="flex items-center gap-2 text-xl font-bold text-primary">
+            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary text-primary-foreground text-sm">
+              D
+            </span>
             DSir
           </Link>
         </div>
@@ -36,10 +43,10 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
               <Link
                 key={item.name}
                 href={item.href}
-                className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition ${
+                className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition ${
                   isActive
-                    ? "bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400"
-                    : "text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+                    ? "bg-primary/10 text-primary"
+                    : "text-muted-foreground hover:bg-accent hover:text-foreground"
                 }`}
               >
                 <Icon className="h-5 w-5" />
@@ -48,18 +55,18 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
             );
           })}
         </nav>
-        <div className="border-t border-slate-200 p-4 dark:border-slate-700">
+        <div className="border-t border-border p-4">
           {user ? (
-            <>
-              <div className="mb-4 flex items-center gap-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-sm font-bold text-blue-600 dark:bg-blue-900/30 dark:text-blue-300">
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
                   {user?.full_name?.[0] ?? user?.email?.[0] ?? "U"}
                 </div>
-                <div className="overflow-hidden">
-                  <p className="truncate text-sm font-medium text-slate-900 dark:text-white">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium text-foreground">
                     {user?.full_name ?? user?.email}
                   </p>
-                  <p className="truncate text-xs text-slate-500 dark:text-slate-400">{user?.email}</p>
+                  <p className="truncate text-xs text-muted-foreground">{user?.email}</p>
                 </div>
               </div>
               <button
@@ -69,19 +76,19 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
                 <LogOut className="h-5 w-5" />
                 Sign out
               </button>
-            </>
+            </div>
           ) : (
             <div className="space-y-2">
-              <p className="text-xs text-slate-500 dark:text-slate-400">Sign in to track your progress</p>
+              <p className="text-xs text-muted-foreground">Sign in to track your progress</p>
               <Link
                 href="/login"
-                className="flex w-full items-center justify-center rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-blue-700"
+                className="flex w-full items-center justify-center rounded-lg bg-primary px-3 py-2 text-sm font-medium text-primary-foreground transition hover:bg-primary/90"
               >
                 Sign in
               </Link>
               <Link
                 href="/register"
-                className="flex w-full items-center justify-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+                className="flex w-full items-center justify-center rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium text-foreground transition hover:bg-accent"
               >
                 Create account
               </Link>
@@ -91,22 +98,23 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
       </aside>
 
       <div className="flex flex-1 flex-col overflow-hidden">
-        <header className="flex h-16 items-center justify-between border-b border-slate-200 bg-white px-4 md:px-6 dark:border-slate-700 dark:bg-slate-900">
+        <header className="flex h-16 items-center justify-between border-b border-border bg-card px-4 md:px-6">
           <MobileSidebar />
-          <h1 className="hidden text-lg font-semibold text-slate-900 dark:text-white md:block">
-            {navigation.find((item) => pathname.startsWith(item.href))?.name ?? "DSir"}
-          </h1>
-          <div className="flex items-center gap-4">
+          <h1 className="hidden text-lg font-semibold md:block">{pageTitle}</h1>
+          <div className="flex items-center gap-2">
             <button
               onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+              className="rounded-lg p-2 text-muted-foreground transition hover:bg-accent hover:text-foreground"
               aria-label="Toggle theme"
             >
               {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
             </button>
           </div>
         </header>
-        <main className="flex-1 overflow-auto p-6">{children}</main>
+        <main className="flex-1 overflow-auto p-4 md:p-6">{children}</main>
+        <footer className="border-t border-border bg-card px-4 py-3 text-center text-xs text-muted-foreground md:px-6">
+          © {new Date().getFullYear()} DSir. Built for learners who want to ship.
+        </footer>
       </div>
     </div>
   );

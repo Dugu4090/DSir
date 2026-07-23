@@ -20,7 +20,10 @@ async def get_profile(
     result = await db.execute(select(UserProfile).where(UserProfile.user_id == current_user.id))
     profile = result.scalar_one_or_none()
     if profile is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Profile not found")
+        profile = UserProfile(user_id=current_user.id)
+        db.add(profile)
+        await db.commit()
+        await db.refresh(profile)
     return profile
 
 
@@ -38,6 +41,11 @@ async def update_profile(
         db.add(profile)
 
     update_data = data.model_dump(exclude_unset=True)
+
+    # full_name lives on the User model, not UserProfile
+    if "full_name" in update_data:
+        current_user.full_name = update_data.pop("full_name")
+
     for field, value in update_data.items():
         setattr(profile, field, value)
 

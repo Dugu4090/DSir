@@ -14,6 +14,7 @@ from src.models.learning import Bookmark
 from src.models.user import User
 from src.schemas.bookmark import BookmarkCreate, BookmarkRead
 from src.schemas.common import PaginatedResponse, PaginationParams
+from src.schemas.content import CourseRead
 
 router = APIRouter()
 
@@ -38,8 +39,6 @@ async def list_bookmarks(
         .limit(pagination.per_page)
     )
     bookmarks = result.unique().scalars().all()
-
-    from src.schemas.content import CourseRead
 
     items = []
     for bookmark in bookmarks:

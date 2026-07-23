@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import uuid
 from typing import Any
 
 from pydantic import BaseModel, Field
@@ -20,3 +21,10 @@ class PaginatedResponse(BaseModel):
     page: int
     per_page: int
     pages: int
+
+
+class ActivityCreate(BaseModel):
+    activity_type: str
+    entity_type: str | None = None
+    entity_id: uuid.UUID | None = None
+    meta: dict[str, Any] | None = None
