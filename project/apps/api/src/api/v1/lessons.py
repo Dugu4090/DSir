@@ -10,10 +10,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.core.dependencies import get_current_active_user, require_content_creator
 from src.db.session import get_db
 from src.models.content import Concept, Lesson
-from src.models.learning import Enrollment, LessonProgress
+from src.models.learning import Enrollment, LessonProgress, UserActivity
 from src.models.user import User
 from src.schemas.common import PaginatedResponse, PaginationParams
 from src.schemas.lesson import LessonCreate, LessonDetail, LessonProgressUpdate, LessonRead
+from src.services.gamification import record_activity
 
 router = APIRouter()
 
@@ -107,13 +108,24 @@ async def update_lesson_progress(
         progress = LessonProgress(user_id=current_user.id, lesson_id=lesson_id)
         db.add(progress)
 
-    if data.is_completed and not progress.is_completed:
+    newly_completed = data.is_completed and not progress.is_completed
+    if newly_completed:
         progress.completed_at = datetime.now(UTC)
     progress.is_completed = data.is_completed
     if not data.is_completed:
         progress.completed_at = None
 
     await db.flush()
+
+    if newly_completed:
+        await record_activity(current_user, db, xp_gain=10)
+        activity = UserActivity(
+            user_id=current_user.id,
+            activity_type="completed_lesson",
+            entity_type="lesson",
+            entity_id=lesson_id,
+        )
+        db.add(activity)
 
     # Update enrollment progress for this course
     concept_result = await db.execute(select(Concept).where(Concept.id == lesson.concept_id))

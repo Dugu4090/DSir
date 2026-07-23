@@ -195,7 +195,10 @@ async def continue_course(
     concept_ids = [c.id for c in concepts]
 
     lessons_result = await db.execute(
-        select(Lesson).where(Lesson.concept_id.in_(concept_ids)).order_by(Lesson.position)
+        select(Lesson)
+        .join(Concept)
+        .where(Lesson.concept_id.in_(concept_ids))
+        .order_by(Concept.order, Lesson.position)
     )
     lessons = lessons_result.scalars().all()
     if not lessons:

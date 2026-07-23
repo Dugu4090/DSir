@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { LogOut, Menu, Moon, Sun, X } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useAuthStore } from "@/hooks/use-auth";
@@ -12,6 +12,10 @@ import { navigation } from "./navigation";
 export function MobileSidebar() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
+
+  useEffect(() => {
+    setOpen(false);
+  }, [pathname]);
   const { theme, setTheme } = useTheme();
   const { user, logout: logoutStore } = useAuthStore();
 

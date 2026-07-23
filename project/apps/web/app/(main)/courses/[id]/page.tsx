@@ -7,6 +7,7 @@ import Image from "next/image";
 import Link from "next/link";
 import {
   BookOpen,
+  Bookmark,
   CheckCircle2,
   ChevronDown,
   Clock,
@@ -16,7 +17,7 @@ import {
   Target,
   User,
 } from "lucide-react";
-import { createEnrollment, fetchCourseDetail } from "@/lib/api";
+import { createBookmark, createEnrollment, deleteBookmark, fetchBookmarks, fetchCourseDetail } from "@/lib/api";
 import { useAuthStore } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { ErrorMessage } from "@/components/ui/error-message";
@@ -42,12 +43,33 @@ export default function CourseDetailPage() {
     queryFn: () => fetchCourseDetail(id),
   });
 
+  const { data: bookmarksData } = useQuery({
+    queryKey: ["bookmarks"],
+    queryFn: fetchBookmarks,
+    enabled: isAuthenticated,
+  });
+
+  const existingBookmark = bookmarksData?.items.find((b) => b.course_id === id);
+
   const enrollMutation = useMutation({
     mutationFn: () => createEnrollment({ course_id: id }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["course-detail", id] });
       queryClient.invalidateQueries({ queryKey: ["my-learning"] });
       queryClient.invalidateQueries({ queryKey: ["enrollments"] });
+    },
+  });
+
+  const bookmarkMutation = useMutation({
+    mutationFn: async () => {
+      if (existingBookmark) {
+        await deleteBookmark(existingBookmark.id);
+      } else {
+        await createBookmark(id);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["bookmarks"] });
     },
   });
 
@@ -155,18 +177,30 @@ export default function CourseDetailPage() {
                   Sign in to Enroll
                 </Link>
               )}
-              {progress.progress_percent > 0 && (
-                <div className="flex items-center gap-3 rounded-xl border border-white/20 bg-white/10 px-4 py-2 backdrop-blur-sm">
-                  <div className="h-2 w-32 overflow-hidden rounded-full bg-white/20">
-                    <div
-                      className="h-full rounded-full bg-blue-500 transition-all"
-                      style={{ width: `${progress.progress_percent}%` }}
-                    />
-                  </div>
-                  <span className="text-sm font-medium">{progress.progress_percent}% complete</span>
-                </div>
+              {isAuthenticated && (
+                <Button
+                  onClick={() => bookmarkMutation.mutate()}
+                  disabled={bookmarkMutation.isPending}
+                  variant="secondary"
+                  size="lg"
+                  className="gap-2"
+                >
+                  <Bookmark className={`h-5 w-5 ${existingBookmark ? "fill-current" : ""}`} />
+                  {existingBookmark ? "Bookmarked" : "Bookmark"}
+                </Button>
               )}
             </div>
+            {progress.progress_percent > 0 && (
+              <div className="flex w-fit items-center gap-3 rounded-xl border border-white/20 bg-white/10 px-4 py-2 backdrop-blur-sm">
+                <div className="h-2 w-32 overflow-hidden rounded-full bg-white/20">
+                  <div
+                    className="h-full rounded-full bg-blue-500 transition-all"
+                    style={{ width: `${progress.progress_percent}%` }}
+                  />
+                </div>
+                <span className="text-sm font-medium">{progress.progress_percent}% complete</span>
+              </div>
+            )}
           </div>
 
           <div className="relative hidden aspect-video overflow-hidden rounded-2xl lg:block">
