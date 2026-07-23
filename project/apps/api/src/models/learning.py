@@ -4,7 +4,7 @@ import uuid
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String, UniqueConstraint
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -32,6 +32,7 @@ class Enrollment(Base):
     )
 
     user: Mapped[User] = relationship("User", back_populates="enrollments")
+    course: Mapped[Course] = relationship("Course")
 
 
 class LessonProgress(Base):
@@ -51,7 +52,6 @@ class LessonProgress(Base):
     )
 
     user: Mapped[User] = relationship("User", back_populates="lesson_progress")
-    lesson: Mapped["Lesson"] = relationship("Lesson")
 
 
 class ConceptMastery(Base):
