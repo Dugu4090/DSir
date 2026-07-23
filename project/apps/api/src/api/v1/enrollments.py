@@ -9,7 +9,7 @@ from sqlalchemy.orm import selectinload
 
 from src.core.dependencies import get_current_active_user
 from src.db.session import get_db
-from src.models.content import Concept, Course, Lesson
+from src.models.content import Concept, Course, Lesson, Roadmap
 from src.models.learning import Enrollment, LessonProgress
 from src.models.user import User
 from src.schemas.common import PaginatedResponse, PaginationParams
@@ -25,11 +25,7 @@ async def list_enrollments(
     current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db),
 ) -> PaginatedResponse:
-    query = (
-        select(Enrollment)
-        .where(Enrollment.user_id == current_user.id)
-        .options(selectinload(Enrollment.course))
-    )
+    query = select(Enrollment).where(Enrollment.user_id == current_user.id).options(selectinload(Enrollment.course))
     total_result = await db.execute(query)
     total = len(total_result.scalars().all())
 
@@ -73,9 +69,7 @@ async def get_my_learning(
         if enrollment.course_id is None:
             continue
         total_result = await db.execute(
-            select(func.count(Lesson.id))
-            .join(Concept)
-            .where(Concept.course_id == enrollment.course_id)
+            select(func.count(Lesson.id)).join(Concept).where(Concept.course_id == enrollment.course_id)
         )
         total_counts[enrollment.course_id] = total_result.scalar() or 0
 

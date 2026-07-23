@@ -1,8 +1,13 @@
+from __future__ import annotations
+
 import uuid
 from datetime import datetime
-from typing import Any
+from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, ConfigDict
+
+if TYPE_CHECKING:
+    from src.schemas.lesson import LessonRead
 
 
 class CourseRead(BaseModel):
@@ -82,5 +87,5 @@ class ConceptDetail(BaseModel):
     difficulty: str | None = None
     order: int
     created_at: datetime
-    lessons: list["LessonRead"] = []
+    lessons: list[LessonRead] = []
     model_config = ConfigDict(from_attributes=True)

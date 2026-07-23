@@ -53,7 +53,10 @@ def upgrade() -> None:
 
     # Enrollment progress fields
     op.add_column("enrollments", sa.Column("progress_percent", sa.Integer(), nullable=True))
-    op.add_column("enrollments", sa.Column("last_lesson_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("lessons.id"), nullable=True))
+    op.add_column(
+        "enrollments",
+        sa.Column("last_lesson_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("lessons.id"), nullable=True),
+    )
     op.execute("UPDATE enrollments SET progress_percent = 0 WHERE progress_percent IS NULL")
     op.alter_column("enrollments", "progress_percent", nullable=False)
 

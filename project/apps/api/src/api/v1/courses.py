@@ -3,7 +3,7 @@ from __future__ import annotations
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import func, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -14,12 +14,12 @@ from src.models.learning import Enrollment, LessonProgress
 from src.models.user import User
 from src.schemas.common import PaginatedResponse, PaginationParams
 from src.schemas.content import (
-    ConceptDetail,
     ConceptRead,
     CourseCreate,
     CourseRead,
     CourseUpdate,
 )
+from src.schemas.enrollment import EnrollmentRead
 from src.schemas.lesson import LessonRead
 
 router = APIRouter()
@@ -50,23 +50,16 @@ async def list_courses(
     if category:
         query = query.where(Course.category.ilike(category))
     if search:
-        query = query.where(
-            Course.title.ilike(f"%{search}%") | Course.description.ilike(f"%{search}%")
-        )
+        query = query.where(Course.title.ilike(f"%{search}%") | Course.description.ilike(f"%{search}%"))
 
     total_result = await db.execute(query)
     total = len(total_result.scalars().all())
 
     sort_column = getattr(Course, sort, Course.title)
-    if order == "desc":
-        sort_column = sort_column.desc()
-    else:
-        sort_column = sort_column.asc()
+    sort_column = sort_column.desc() if order == "desc" else sort_column.asc()
 
     result = await db.execute(
-        query.order_by(sort_column)
-        .offset((pagination.page - 1) * pagination.per_page)
-        .limit(pagination.per_page)
+        query.order_by(sort_column).offset((pagination.page - 1) * pagination.per_page).limit(pagination.per_page)
     )
     courses = result.scalars().all()
 
@@ -94,11 +87,7 @@ async def get_course_detail(
     current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, object]:
-    result = await db.execute(
-        select(Course)
-        .where(Course.id == course_id)
-        .options(selectinload(Course.concepts))
-    )
+    result = await db.execute(select(Course).where(Course.id == course_id).options(selectinload(Course.concepts)))
     course = result.unique().scalar_one_or_none()
     if course is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Course not found")
@@ -144,9 +133,15 @@ async def get_course_detail(
         module_lessons = []
         for lesson in concept_lessons:
             total_lessons += 1
-            if lesson.id in completed_lesson_ids:
+            is_completed = lesson.id in completed_lesson_ids
+            if is_completed:
                 completed_count += 1
-            module_lessons.append(LessonRead.model_validate(lesson).model_dump())
+            module_lessons.append(
+                {
+                    **LessonRead.model_validate(lesson).model_dump(),
+                    "is_completed": is_completed,
+                }
+            )
 
         modules_out.append(
             {
@@ -161,7 +156,7 @@ async def get_course_detail(
     return {
         "course": CourseRead.model_validate(course).model_dump(),
         "modules": modules_out,
-        "enrollment": Enrollment.model_validate(enrollment).model_dump() if enrollment else None,
+        "enrollment": EnrollmentRead.model_validate(enrollment).model_dump() if enrollment else None,
         "progress": {
             "completed_lessons": completed_count,
             "total_lessons": total_lessons,

@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.dependencies import get_current_active_user, require_content_creator
 from src.db.session import get_db
-from src.models.content import Concept, Course, Lesson
+from src.models.content import Concept, Lesson
 from src.models.learning import Enrollment, LessonProgress
 from src.models.user import User
 from src.schemas.common import PaginatedResponse, PaginationParams
@@ -128,9 +128,9 @@ async def update_lesson_progress(
         enrollment = enrollment_result.scalar_one_or_none()
         if enrollment:
             total_result = await db.execute(
-                select(Lesson.id).where(Lesson.concept_id.in_(
-                    select(Concept.id).where(Concept.course_id == concept.course_id)
-                ))
+                select(Lesson.id).where(
+                    Lesson.concept_id.in_(select(Concept.id).where(Concept.course_id == concept.course_id))
+                )
             )
             total_lessons = len(total_result.scalars().all())
             completed_result = await db.execute(

@@ -12,6 +12,7 @@ from src.db.base import Base
 from src.db.types import JSONType
 
 if TYPE_CHECKING:
+    from src.models.content import Course
     from src.models.user import User
 
 
